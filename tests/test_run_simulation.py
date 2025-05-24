@@ -1,0 +1,73 @@
+from web.run_simulation import make_reaction_mechanism_for_reagent
+
+
+def handles_no_pre_equilibration_needed(self):
+    """
+    `is_each_involved` is a list of booleans indicating whether each elementary reaction is involved in the pre-equilibration of the reagent.
+    If no reactions are involved, the function should create a reaction mechanism with just the reagent itself.
+    """
+    is_each_involved = [False, False]
+    job_id = "test_job"
+    energy_dict = {"A": -10.0, "B": -5.0}
+    puzzle_definition = {
+        "coefficient_dict": {"A": 0, "B": 1},
+        "coefficient_array": [[-1.0, 1.0], [0.0, 0.0]],
+    }
+    reagent = "A"
+    species_list = ["A", "B"]
+
+    result = make_reaction_mechanism_for_reagent(
+        is_each_involved, job_id, energy_dict, puzzle_definition, reagent, species_list
+    )
+
+    self.assertEqual(result.num_rxn, 1)
+    self.assertEqual(result.num_species, 1)
+    self.assertEqual(result.species_list, ["A"])
+    self.assertTrue((result.coefficient_array == [[0.0]]).all())
+
+
+def filters_unused_species_correctly(self):
+    """
+    Test that the function correctly filters out unused species from the reaction mechanism.
+
+    Assuming the puzzle specified these two reactions:
+    - A + B -> C
+    - (nothing) -> (nothing) <-- malformed reaction, but it should be ignored.
+    The function should only keep the first reaction and filter out the second one.
+    """
+    is_each_involved = [True, False]
+    job_id = "test_job"
+    energy_dict = {"A": -10.0, "B": -5.0, "C": -2.0}
+    puzzle_definition = {
+        "coefficient_dict": {"A": 0, "B": 1, "C": 2},
+        "coefficient_array": [[-1.0, 1.0, 0.0], [0.0, 0.0, 0.0]],
+    }
+    reagent = "A"
+    species_list = ["A", "B", "C"]
+
+    result = make_reaction_mechanism_for_reagent(
+        is_each_involved, job_id, energy_dict, puzzle_definition, reagent, species_list
+    )
+
+    self.assertEqual(result.num_rxn, 1)
+    self.assertEqual(result.num_species, 2)
+    self.assertEqual(result.species_list, ["A", "B"])
+    self.assertTrue((result.coefficient_array == [[-1.0, 1.0]]).all())
+
+
+def handles_empty_reactions(self):
+    is_each_involved = []
+    job_id = "test_job"
+    energy_dict = {}
+    puzzle_definition = {"coefficient_dict": {}, "coefficient_array": []}
+    reagent = "X"
+    species_list = []
+
+    result = make_reaction_mechanism_for_reagent(
+        is_each_involved, job_id, energy_dict, puzzle_definition, reagent, species_list
+    )
+
+    self.assertEqual(result.num_rxn, 1)
+    self.assertEqual(result.num_species, 1)
+    self.assertEqual(result.species_list, ["X"])
+    self.assertTrue((result.coefficient_array == [[0.0]]).all())
