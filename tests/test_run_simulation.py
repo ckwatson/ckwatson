@@ -100,6 +100,13 @@ def test_make_reaction_mechanism_for_reagent_for_normal_case():
     )
     # Assert all fields using __dict__ and correct keys
     rm_dict = reaction_mechanism.__dict__
+    # It will look like this:
+    #   {'JSON_Encoder': <class 'kernel.data.molecular_species.mol_JSON_Encoder'>, 'number_of_reactions': 1,
+    #   'number_of_species': 2, 'molecular_species_dict': {'A': {'name': 'A', 'energy': 10.0, 'atom_list': None},
+    #   'B': {'name': 'B', 'energy': 20.0, 'atom_list': None}}, 'coefficient_dict': {'A': 0, 'B': 1},
+    #   'coefficient_array': array([[ 1., -1.]]),
+    #   'reactant_coefficient_array': array([[0., 1.]]),
+    #   'product_coefficient_array': array([[1., 0.]])}
     assert rm_dict["number_of_reactions"] == 1
     assert rm_dict["number_of_species"] == 2  # A and B
     assert rm_dict["coefficient_dict"] == {"A": 0, "B": 1}
