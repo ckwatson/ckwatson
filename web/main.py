@@ -9,7 +9,6 @@ import os
 import sys
 import traceback
 from pprint import pprint
-from typing import Dict, List, Optional, Tuple
 
 import colorlog
 import humanize
@@ -18,16 +17,8 @@ import numpy as np
 from flask import Flask, jsonify, render_template, request
 from flask_compress import Compress
 from flask_sse import sse
-from numpy._typing import NDArray
-from tabulate import tabulate
 
-from kernel.data import (
-    condition_class,
-    puzzle_class,
-    reaction_mechanism_class,
-    solution_class,
-)
-from kernel.engine import plotter
+from web.run_simulation import simulate_experiments_and_plot
 from web.save_a_puzzle import save_a_puzzle
 
 np.seterr(all="warn")
@@ -143,189 +134,6 @@ def handle_plot_request():
             f"Executed for {humanize.precisedelta(dt.datetime.now() - start_time)}."
         )
         return jsonify(jobID=data["jobID"], status="error")
-
-
-def simulate_experiments_and_plot(
-    data: Dict,
-    puzzle_definition: Dict,
-    temperature: float,
-    diag: bool = False,
-) -> Tuple[str, str]:
-    """
-    Simulate the puzzle and draw plots.
-    """
-    logger = logging.getLogger(data["jobID"]).getChild("simulate_experiments_and_plot")
-    # Now start preparing the instances of custom classes for further actual use in Engine.Driver:
-    #    (1) Instance of the Puzzle class:
-    #           (1.1) general data:
-    elementary_reactions = np.array(puzzle_definition["coefficient_array"], dtype=float)
-    energy_dict = puzzle_definition["energy_dict"]
-    # `coefficient_dict` maps species names to their indices in the coefficient array.
-    species_list = sorted(
-        puzzle_definition["coefficient_dict"],
-        key=puzzle_definition["coefficient_dict"].get,
-    )
-    num_rxn = len(puzzle_definition["coefficient_array"])
-    num_mol = len(species_list)
-    logger.info(
-        "        %i species are involved. They are: %s", num_mol, " ".join(species_list)
-    )
-    #           (1.2) data about the reagents, used in pre-equilibrium computations:
-    #         - - - - - - - - - - - - - - -
-    logger.info("    (0) Pre-equilibration data:")
-    this_puzzle = puzzle_class.puzzle(
-        num_rxn,
-        num_mol,
-        species_list,
-        elementary_reactions,
-        energy_dict,
-        reagent_dictionary=[
-            # Note: We use a list here because we want to keep the order of the reagents as they are defined in the puzzle file.
-            # TODO: Why would it matter? The `.puz` files, when loaded into the Python realm as `dict`s, will not be ordered.
-            (
-                reagent,
-                make_reaction_mechanism_for_reagent(
-                    PERsToggles,
-                    data["jobID"],
-                    energy_dict,
-                    puzzle_definition,
-                    reagent,
-                    species_list,
-                ),
-            )
-            for reagent, PERsToggles in puzzle_definition["reagentPERs"].items()
-        ],
-        Ea=puzzle_definition.get("transition_state_energies", None),
-    )
-    logger.info("    (1) Puzzle Instance successfully created.")
-    #    (2) Instance of the Condition class:
-    # rxn_temp = temperature
-    # Each entry in data['conditions'] is of the form:
-    #     [name of the reactant, amount, its fridge temperature]
-    r_names = [reactant["name"] for reactant in data["conditions"]]
-    r_concs = [reactant["amount"] for reactant in data["conditions"]]
-    r_temps = [reactant["temperature"] for reactant in data["conditions"]]
-    m_concs = [0.0] * num_mol
-    logger.info("        %i reactants out of %i species.", len(r_names), num_mol)
-    #         - - - - - - - - - - - - - - -
-    this_condition: condition_class.Condition = condition_class.Condition(
-        temperature, species_list, r_names, r_temps, r_concs, m_concs
-    )
-    logger.info("    (2) Condition Instance successfully created.")
-    #    (3) Instance of the Solution class:
-    coefficient_array_proposed = []
-    for each_rxn_proposed in data["reactions"]:
-        coefficient_line_proposed = [0] * num_mol
-        for each_slot in each_rxn_proposed:
-            if each_slot != "":
-                coefficient_line_proposed[species_list.index(each_slot)] += 1
-        coefficient_array_proposed.append(coefficient_line_proposed)
-    num_rxn_proposed = len(coefficient_array_proposed)
-    #         - - - - - - - - - - - - - - -
-    this_solution = solution_class.solution(
-        num_rxn_proposed,
-        num_mol,
-        species_list,
-        coefficient_array_proposed,
-        energy_dict,
-    )
-    logger.info("    (3) Solution Instance successfully created.")
-    # Finally, drive the engine with these data:
-    logger.info("    (4) Simulating...")
-
-    logger.info("         (a) True Model first:")
-
-    logger.info("             simulating...")
-    true_data: np.ndarray = run_true_experiment(
-        data["jobID"], this_puzzle, this_condition, diag=diag
-    )
-    logger.info("         (b) User Model then:")
-
-    logger.info("             simulating...")
-    # if we are simulating the true_model then solution argument is none
-    user_data: Optional[np.ndarray] = run_proposed_experiment(
-        data["jobID"], this_condition, this_solution, true_data, diag=diag
-    )
-    if user_data is None:
-        logger.error("             The model you proposed failed.")
-
-    logger.info("    (5) Drawing plots... ")
-    (plot_individual, plot_combined) = plotter.sub_plots(
-        plottingDict=puzzle_definition["coefficient_dict"],
-        true_data=true_data,
-        user_data=user_data,
-    )
-    return plot_combined, plot_individual
-
-
-def make_reaction_mechanism_for_reagent(
-    is_each_involved: List[bool],
-    job_id: str,
-    energy_dict: Dict,
-    puzzle_definition: Dict,
-    reagent: str,
-    species_list: List[str],
-):
-    """
-    Make a reaction mechanism for the natural reaction of the reagent when sitting idle in a canister/beaker.
-    This will be used for simulating the pre-equilibration of the reagent.
-    """
-    logger = logging.getLogger(job_id).getChild("make_reaction_mechanism_for_reagent")
-    logger.info('        Making reaction mechanism for the reagent "%s":', reagent)
-    reagent_id = puzzle_definition["coefficient_dict"][reagent]
-    # Filter for pre-equilibration reactions:
-    pre_equl_elem_rxns = [
-        # `is_involved` = "is this elementary reaction involved in the pre-equilibration of this reagent?"
-        rxn
-        for rxn, is_involved in zip(
-            puzzle_definition["coefficient_array"], is_each_involved
-        )
-        if is_involved
-    ]
-    if not pre_equl_elem_rxns:
-        logger.info(
-            f'            For the reagent #{reagent_id} "{reagent}", no pre-equilibration is needed.'
-        )
-        pre_equl_elem_rxns = np.array([[0.0]], dtype=float)
-        reagent_species_list = [reagent]
-    else:
-        # convert it into a numpy dict
-        pre_equl_elem_rxns = np.array(pre_equl_elem_rxns, dtype=float)
-        # a boolean array of whether each species specified in the puzzle file is present in this set of ElemRxns for preEqul.
-        if_uninvolvedSpecies: NDArray[np.bool_] = np.all(
-            pre_equl_elem_rxns == False, axis=0
-        )
-        # now, remove unused species to simplify the rxn. set used for pre-equilibration of this particular reagent:
-        pre_equl_elem_rxns = np.delete(
-            pre_equl_elem_rxns, np.where(if_uninvolvedSpecies), axis=1
-        )
-        logger.debug(f"            species_list         : {species_list}")
-        logger.debug(f"            if_uninvolvedSpecies: {if_uninvolvedSpecies}")
-        # List of species involved in the pre-equilibration of this reagent.
-        reagent_species_list = [
-            s
-            for s, uninvolved in zip(species_list, if_uninvolvedSpecies)
-            if not uninvolved
-        ]
-        # Print out the pre-equilibration reactions:
-        table = tabulate(
-            pre_equl_elem_rxns,
-            headers=reagent_species_list,
-            floatfmt=".4g",
-            tablefmt="github",
-        )
-        logger.info("            About pre-equilibration:\n%s", table)
-    reaction_mechanism = reaction_mechanism_class.reaction_mechanism(
-        len(pre_equl_elem_rxns),
-        len(reagent_species_list),
-        reagent_species_list,
-        pre_equl_elem_rxns,
-        energy_dict,
-    )
-    return reaction_mechanism
-
-
-from kernel.engine.driver import run_proposed_experiment, run_true_experiment
 
 
 @app.route("/save", methods=["POST", "OPTIONS"])
