@@ -76,5 +76,5 @@ Please use [this Buildpack](https://github.com/dmathieu/heroku-buildpack-submodu
 Run:
 
 ```shell
-PYTHONPATH=. uv run pytest tests/ --cov=web/ ; uv run coverage-badge -f -o coverage.svg
+PYTHONPATH=. uv run pytest --cov=web/ --cov=kernel/ ; uv run coverage-badge -f -o coverage.sv
 ```
