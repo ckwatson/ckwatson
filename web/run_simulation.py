@@ -29,7 +29,6 @@ def simulate_experiments_and_plot(
     #    (1) Instance of the Puzzle class:
     #           (1.1) general data:
     elementary_reactions = np.array(puzzle_definition["coefficient_array"], dtype=float)
-    energy_dict = puzzle_definition["energy_dict"]
     # `coefficient_dict` maps species names to their indices in the coefficient array.
     species_list = sorted(
         puzzle_definition["coefficient_dict"],
@@ -48,7 +47,7 @@ def simulate_experiments_and_plot(
         num_mol,
         species_list,
         elementary_reactions,
-        energy_dict,
+        puzzle_definition["energy_dict"],
         reagent_dictionary=[
             # Note: We use a list here because we want to keep the order of the reagents as they are defined in the puzzle file.
             # TODO: Why would it matter? The `.puz` files, when loaded into the Python realm as `dict`s, will not be ordered.
@@ -57,7 +56,6 @@ def simulate_experiments_and_plot(
                 make_reaction_mechanism_for_reagent(
                     PERsToggles,
                     data["jobID"],
-                    energy_dict,
                     puzzle_definition,
                     reagent,
                     species_list,
@@ -97,7 +95,7 @@ def simulate_experiments_and_plot(
         num_mol,
         species_list,
         coefficient_array_proposed,
-        energy_dict,
+        puzzle_definition["energy_dict"],
     )
     logger.info("    (3) Solution Instance successfully created.")
     # Finally, drive the engine with these data:
@@ -131,7 +129,6 @@ def simulate_experiments_and_plot(
 def make_reaction_mechanism_for_reagent(
     is_each_involved: List[bool],
     job_id: str,
-    energy_dict: Dict,
     puzzle_definition: Dict,
     reagent: str,
     species_list: List[str],
@@ -190,6 +187,6 @@ def make_reaction_mechanism_for_reagent(
         len(reagent_species_list),
         reagent_species_list,
         pre_equl_elem_rxns,
-        energy_dict,
+        puzzle_definition["energy_dict"],
     )
     return reaction_mechanism
