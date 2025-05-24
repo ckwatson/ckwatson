@@ -205,6 +205,7 @@ def simulate_experiments_and_plot(
     r_concs = [reactant["amount"] for reactant in data["conditions"]]
     r_temps = [reactant["temperature"] for reactant in data["conditions"]]
     m_concs = [0.0] * num_mol
+    logger.info("        %i reactants out of %i species.", len(r_names), num_mol)
     #         - - - - - - - - - - - - - - -
     this_condition: condition_class.Condition = condition_class.Condition(
         temperature, species_list, r_names, r_temps, r_concs, m_concs
