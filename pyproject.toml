@@ -25,6 +25,7 @@ profile = "black"
 
 [dependency-groups]
 dev = [
+    "coverage-badge>=1.1.2",
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
 ]
