@@ -86,9 +86,9 @@ def make_exp_with_flat_region(flat_start=8, total=12, n_species=2) -> experiment
     return experiment(rm, 25, input_time=time_array, rxn_profile=profile)
 
 
-def test_remove_flat_region_removes_flat():
+def test_find_flat_region_removes_flat():
     exp = make_exp_with_flat_region(flat_start=50, total=100, n_species=2)
-    exp.remove_flat_region(job_id="test", threshold=1e-6)
+    exp.find_flat_region(job_id="test", threshold=1e-6)
     # After removing, the time_array and reaction_profile should be cut at the start of the flat region.
     # The flat region starts at 50, so we expect the method to detect it at the 60-th time step.
     # (Because the method samples 10 time steps. The resolution is every 10 time steps.)
@@ -98,30 +98,30 @@ def test_remove_flat_region_removes_flat():
     assert exp.reaction_profile.shape[0] == exp.time_array.shape[0]
 
 
-def test_remove_flat_region_no_flat():
+def test_find_flat_region_no_flat():
     exp = make_exp_with_flat_region(flat_start=100, total=100, n_species=2)
     # No flat region, should not cut
-    exp.remove_flat_region(job_id="test", threshold=1e-6)
+    exp.find_flat_region(job_id="test", threshold=1e-6)
     assert len(exp.time_array) == 100
     assert round(exp.time_array[-1]) == 10
     assert exp.reaction_profile.shape[0] == 100
 
 
-def test_remove_flat_region_short_profile():
+def test_find_flat_region_short_profile():
     exp = make_exp_with_flat_region(flat_start=2, total=5, n_species=2)
-    exp.remove_flat_region(job_id="test", threshold=1e-3)
+    exp.find_flat_region(job_id="test", threshold=1e-3)
     # Should still work for short profiles
     assert len(exp.time_array) == 2
     assert round(exp.time_array[-1]) == 2
     assert exp.reaction_profile.shape[0] == exp.time_array.shape[0]
 
 
-def test_remove_flat_region_all_flat():
+def test_find_flat_region_all_flat():
     rm = mock_reaction_mechanism()
     time_array = np.linspace(0, 10, 10)
     profile = np.ones((10, 2))
     exp = experiment(rm, 25, input_time=time_array, rxn_profile=profile)
-    exp.remove_flat_region(job_id="test", threshold=1e-6)
+    exp.find_flat_region(job_id="test", threshold=1e-6)
     # Should cut to the first sample
     assert len(exp.time_array) == 1
     assert round(exp.time_array[-1]) == 0
