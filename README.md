@@ -7,9 +7,15 @@ CKWatson
 ![Coverage Status](coverage.svg)
 ![License](https://img.shields.io/github/license/ckwatson/web_gui)
 
-A Chemical Kinetics Simulator Game as a webapp, written in Python.
+CKWatson is an educational game about [chemical kinetics][ck]. The game is organized in "puzzles". Each puzzle starts off with a few reactants.
+Within a given set of all substances possibly present, the player's goal is to figure out all [elementary reactions][er] involved with the chemical process when the reactants are mixed together.
+
+> Elementary [reactions], my dear Watson!
 
 <img width="1000" alt="image" src="https://github.com/user-attachments/assets/5e647c5c-0168-4cdb-8a29-01c8d81bc8db" />
+
+[ck]: https://chem.libretexts.org/Bookshelves/General_Chemistry/Map%3A_Chemistry_-_The_Central_Science_(Brown_et_al.)/14%3A_Chemical_Kinetics
+[er]: https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Kinetics/03%3A_Rate_Laws/3.02%3A_Reaction_Mechanisms/3.2.01%3A_Elementary_Reactions
 
 
 ## Installation
