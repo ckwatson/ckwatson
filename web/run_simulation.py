@@ -2,6 +2,7 @@ import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from gevent import sleep
 from numpy._typing import NDArray
 from tabulate import tabulate
 
@@ -25,6 +26,8 @@ def simulate_experiments_and_plot(
     Simulate the puzzle and draw plots.
     """
     logger = logging.getLogger(data["jobID"]).getChild("simulate_experiments_and_plot")
+    # TODO: Remove this hack add properly fix the "first couple of lines missing" issue.
+    sleep(0.1)
     # Now start preparing the instances of custom classes for further actual use in Engine.Driver:
     #    (1) Instance of the Puzzle class:
     #           (1.1) general data:
@@ -84,11 +87,43 @@ def simulate_experiments_and_plot(
     coefficient_array_proposed = []
     for each_rxn_proposed in data["reactions"]:
         coefficient_line_proposed = [0] * num_mol
-        for each_slot in each_rxn_proposed:
-            if each_slot != "":
-                coefficient_line_proposed[species_list.index(each_slot)] += 1
+        for slot_id, each_slot in enumerate(each_rxn_proposed):
+            if each_slot == "":
+                continue
+            if each_slot not in species_list:
+                logger.error(
+                    '            The species "%s" is not in the list of species: %s',
+                    each_slot,
+                    ", ".join(species_list),
+                )
+                continue
+            species_id = species_list.index(each_slot)
+            # Reactants (which sit in the first 2 slots) have a positive coefficient, because they are consumed in the reaction.
+            # Products (which sit in the last 2 slots) have a negative coefficient, because they are produced in the reaction.
+            coefficient_line_proposed[species_id] += 1 if slot_id < 2 else -1
         coefficient_array_proposed.append(coefficient_line_proposed)
+    # collect the equilibrated concentrations
+    table = tabulate(
+        coefficient_array_proposed,
+        headers=species_list,
+        floatfmt=".4g",
+        tablefmt="github",
+    )
     num_rxn_proposed = len(coefficient_array_proposed)
+    logger.info(
+        f"        User-proposed {num_rxn_proposed} reactions. They form a coefficient array of:\n%s",
+        table,
+    )
+    table = tabulate(
+        puzzle_definition["coefficient_array"],
+        headers=species_list,
+        floatfmt=".4g",
+        tablefmt="github",
+    )
+    logger.info(
+        "        Compare this array with the true coefficient array:\n%s",
+        table,
+    )
     #         - - - - - - - - - - - - - - -
     this_solution = solution_class.solution(
         num_rxn_proposed,
