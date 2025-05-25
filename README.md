@@ -1,5 +1,5 @@
-CKWatson Online
-===============
+CKWatson
+========
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
@@ -9,7 +9,8 @@ CKWatson Online
 
 A Chemical Kinetics Simulator Game as a webapp, written in Python.
 
-![Screenshot](http://i.imgur.com/UVizS1S.png)
+<img width="1000" alt="image" src="https://github.com/user-attachments/assets/5e647c5c-0168-4cdb-8a29-01c8d81bc8db" />
+
 
 ## Installation
 
