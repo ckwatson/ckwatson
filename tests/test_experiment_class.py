@@ -90,10 +90,11 @@ def test_remove_flat_region_removes_flat():
     exp = make_exp_with_flat_region(flat_start=50, total=100, n_species=2)
     exp.remove_flat_region(job_id="test", threshold=1e-6)
     # After removing, the time_array and reaction_profile should be cut at the start of the flat region.
-    # The flat region starts at 50, so we expect the method to detect it at the 50-th time step.
-    # In other words, time_array should be cut to 50 units long.
-    assert len(exp.time_array) == 50
-    assert round(exp.time_array[-1]) == 5
+    # The flat region starts at 50, so we expect the method to detect it at the 60-th time step.
+    # (Because the method samples 10 time steps. The resolution is every 10 time steps.)
+    # In other words, time_array should be cut to 60 units long.
+    assert len(exp.time_array) == 60
+    assert round(exp.time_array[-1]) == 6
     assert exp.reaction_profile.shape[0] == exp.time_array.shape[0]
 
 
