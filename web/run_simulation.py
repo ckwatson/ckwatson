@@ -154,6 +154,7 @@ def simulate_experiments_and_plot(
 
     logger.info("    (5) Drawing plots... ")
     (plot_individual, plot_combined) = plotter.sub_plots(
+        job_id=data["jobID"],
         plottingDict=puzzle_definition["coefficient_dict"],
         true_data=true_data,
         user_data=user_data,
