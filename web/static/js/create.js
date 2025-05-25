@@ -119,8 +119,8 @@ checkBalance = function (thisRow) {
         (cells[0].value == cells[2].value && cells[1].value == cells[3].value) // or this elem. reaction is trivial
         ||
         (cells[0].value == cells[3].value && cells[1].value == cells[2].value)) {
-    thisRow.removeClass('bg-danger')
-    thisRow.removeClass('bg-success')
+    thisRow.removeClass('bg-danger-subtle')
+    thisRow.removeClass('bg-success-subtle')
     return false
   } else {
     let ifBalanced = true
@@ -132,18 +132,18 @@ checkBalance = function (thisRow) {
     };
     // now change visible hints:
     if (ifBalanced) {
-      thisRow.removeClass('bg-danger')
-      thisRow.addClass('bg-success')
+      thisRow.removeClass('bg-danger-subtle')
+      thisRow.addClass('bg-success-subtle')
     } else {
-      thisRow.addClass('bg-danger')
-      thisRow.removeClass('bg-success')
+      thisRow.addClass('bg-danger-subtle')
+      thisRow.removeClass('bg-success-subtle')
     };
     return ifBalanced
   }
 }
 checkOverallBalance = function () {
   // this function sets the usablilty of the main proceed button by check whether the set of elementary reactions is valid.
-  if ($('#elementaryReactionsTbody>tr.bg-danger').length == 0 && $('#elementaryReactionsTbody > tr.bg-success').length > 0) {
+  if ($('#elementaryReactionsTbody>tr.bg-danger-subtle').length == 0 && $('#elementaryReactionsTbody > tr.bg-success-subtle').length > 0) {
     console.log('Elementary Reactions valid.')
     $('#proceedButton').removeClass('disabled').prop('disabled', false)
   } else {
@@ -248,7 +248,7 @@ proceed = function () {
   // empty species list that might be populated from last time clicking proceed button
   speciesList = []
   // Get reactions and species:
-  reactions = $.makeArray($('#elementaryReactionsTbody>tr.bg-success').map(function () {
+  reactions = $.makeArray($('#elementaryReactionsTbody>tr.bg-success-subtle').map(function () {
     return [$('td>input', this).map(function () {
       speciesList.push(this.value)
       return this.value

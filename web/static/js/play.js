@@ -31,6 +31,9 @@ dict_reverse = function (obj) {
   return new_obj
 }
 // JS fixes END
+
+currentViewType = 'info'
+
 print = function (content) {
   $('#console').append('<p>' + content + '</p>')
 }
@@ -78,7 +81,7 @@ const emptyElementaryReaction = $(`
 const hasEmptyElementaryReaction = true
 // functions for checking mass balances of elementary reactions:
 checkOverallBalance = function () {
-  if ($('#elementaryReactionsTbody>tr.bg-danger').length == 0 && $('#elementaryReactionsTbody > tr.bg-success').length > 0) {
+  if ($('#elementaryReactionsTbody>tr.bg-danger-subtle').length == 0 && $('#elementaryReactionsTbody > tr.bg-success-subtle').length > 0) {
     $('#plotButton').removeClass('disabled').prop('disabled', false)
   } else {
     $('#plotButton').addClass('disabled').prop('disabled', true)
@@ -104,8 +107,8 @@ checkBalance = function (thisRow) {
     };
   }
   if ($.isEmptyObject(atomsArray)) { // user emptied the reaction
-    thisRow.removeClass('bg-danger')
-    thisRow.removeClass('bg-success')
+    thisRow.removeClass('bg-danger-subtle')
+    thisRow.removeClass('bg-success-subtle')
   } else {
     let ifBalanced = true
     for (var i in atomsArray) {
@@ -115,11 +118,11 @@ checkBalance = function (thisRow) {
       }
     }
     if (ifBalanced) {
-      thisRow.removeClass('bg-danger')
-      thisRow.addClass('bg-success')
+      thisRow.removeClass('bg-danger-subtle')
+      thisRow.addClass('bg-success-subtle')
     } else {
-      thisRow.addClass('bg-danger')
-      thisRow.removeClass('bg-success')
+      thisRow.addClass('bg-danger-subtle')
+      thisRow.removeClass('bg-success-subtle')
     }
     // console.log(ifBalanced, atomsArray);
     return ifBalanced
@@ -157,9 +160,9 @@ addElementaryReaction = function () {
 }
 // Behavior of the rows of elementary reactions -- END
 const serverEventListeners = {}
-plot = function () {
+function plot () {
   // Get reactions
-  var reactions = $('#elementaryReactionsTbody>tr.bg-success').map(function () {
+  var reactions = $('#elementaryReactionsTbody>tr.bg-success-subtle').map(function () {
     return [$('td>select', this).map(function () {
       return this.value
     }).toArray()]
@@ -180,10 +183,11 @@ plot = function () {
   const solutionID = md5(JSON.stringify(reactions))
   const conditionID = md5(JSON.stringify(conditions))
   const jobID = ip + '_' + conditionID + '_' + temperature.toString() + '_' + solutionID + '_' + d.getTime().toString() // $('#result_nav > li').length + 1;
-  if ($('#' + jobID).length > 0) {
-    $('#' + jobID + '_nav > a').trigger('click')
+  if ($(`#${jobID}`).length > 0) {
+    $(`#${jobID}_nav`).tab('show')
   } else {
-    const $btn = $(this).button('loading')
+    const $btn = $(this)
+    $btn.prop('disabled', true).text('Loading...')
     parameters = {
       puzzle: puzzleName,
       reactions,
@@ -193,26 +197,30 @@ plot = function () {
       solutionID,
       conditionID
     }
-    // console.log(parameters);
-    // Placeholder for results:
-    const thisResultPanel = $('<div role="tabpanel" class="tab-pane" id="' + jobID + `">
-                                <div class="panel-body tab-content">
-                                    <div role="tabpanel" class="tab-pane view_individual">
-                                    </div>
-                                    <div role="tabpanel" class="tab-pane view_combined">
-                                    </div>
-                                    <pre role="tabpanel" class="tab-pane view_info language-python"></pre>
-                                </div>
-                                <div class="panel-footer"></div>
-                             </div>`)
+    // Create a new panel for this job. It will contain the plots and the logs in three different tabs:
+    const thisResultPanel = $(`
+      <div class="tab-pane" id="${jobID}" role="tabpanel">
+        <div class="view_individual" style="display:none"></div>
+        <div class="view_combined" style="display:none"></div>
+        <pre class="view_info language-python"></pre>
+        <div class="card-footer"></div>
+      </div>`)
     thisResultPanel.appendTo('#result_panels')
-    $('#viewControl a.active').tab('show')
-    const thisResultNavPage = $('<li role="presentation" id="' + jobID + `_nav">
-                                    <a href="#` + jobID + `" role="tab" data-toggle="tab">Plotting...</a>
-                                </li>`)
+    console.log('Adding new tab pane for this job:', thisResultPanel)
+
+    // Immediately switch current view setting
+    currentViewType = 'info'
+    $('#button_to_view_info').click()
+
+    // Add a new tab for this job:
+    const thisResultNavPage = $(`
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="${jobID}_nav" data-bs-toggle="tab" data-bs-target="#${jobID}" type="button" role="tab">Plotting...</button>
+      </li>`)
     thisResultNavPage.appendTo('#result_nav')
-    $('a[href=".view_info"]').trigger('click') // switch to message tab (i call it "view"). Use "click" instead of "tab show" to make sure styling works.
-    $('a', thisResultNavPage).trigger('click') // switch to this view now instantly. I didn't implement this at first because there was nothing to show, but now we have debug info to display.
+    console.log('Adding new tab button for this job:', thisResultNavPage)
+    $(`#${jobID}_nav`).tab('show')
+
     // Start listening to the server about how it gonna be doing:
     const source = new EventSource('/stream?channel=' + jobID) // See: http://flask-sse.readthedocs.io/en/latest/advanced.html#channels
     serverEventListeners[jobID] = source
@@ -224,7 +232,7 @@ plot = function () {
       /* console.log(event.data);
             console.log(this); */
       const data = JSON.parse(event.data)
-      const $infoPanel = $('#' + this.jobID + ' > .panel-body > .view_info')
+      const $infoPanel = $(`#${this.jobID} .view_info`)
       $infoPanel.text($infoPanel.text() + data.data)
       $infoPanel.scrollTop($infoPanel.prop('scrollHeight'))
     }
@@ -236,32 +244,38 @@ plot = function () {
       data: JSON.stringify(parameters),
       dataType: 'json',
       success: function (data) {
-        console.log('Responsed:', data)
+        console.log('Responded:', data)
         if (data.status == 'success') {
-          $('#' + data.jobID + ' > .panel-footer').html('Completed at <code>' + Date() + '</code>.')
-          $('#' + data.jobID + ' > .panel-body > .view_individual').append(data.plot_individual)
-          $('#' + data.jobID + ' > .panel-body > .view_combined').append(data.plot_combined)
-          $('#' + data.jobID + '_nav > a').text('At ' + data.temperature.toString() + 'K')
+          $(`#${data.jobID} .card-footer`).html('Completed at <code>' + Date() + '</code>.')
+          $(`#${data.jobID} .view_individual`).append(data.plot_individual)
+          $(`#${data.jobID} .view_combined`).append(data.plot_combined)
+          $(`#${data.jobID}_nav`).text('At ' + data.temperature.toString() + 'K')
           serverEventListeners[data.jobID].close()
-          $('a[href=".view_combined"]').trigger('click') // switch to combined tab (i call it "view"). Use "click" instead of "tab show" to make sure styling works.
-          console.log($('#' + data.jobID + ' > .panel-body > .view_info').get())
-          Prism.highlightElement($('#' + data.jobID + ' > .panel-body > .view_info').get()[0])
-          $btn.button('reset')
+
+          // Set the view type to combined after the job is done.
+          currentViewType = 'combined'
+          $('#button_to_view_combined').click()
+          updateAllTabViews()
+
+          console.log($(`#${data.jobID} .view_info`).get())
+          Prism.highlightElement($(`#${data.jobID} .view_info`).get()[0])
+          $btn.prop('disabled', false).text('Plot')
         } else {
-          $('#' + data.jobID + '_nav > a').text('Failed Job')
+          $(`#${data.jobID}_nav`).text('Failed Job')
           serverEventListeners[data.jobID].close()
-          console.log($('#' + data.jobID + ' > .panel-body > .view_info').get())
-          Prism.highlightElement($('#' + data.jobID + ' > .panel-body > .view_info').get()[0])
-          $btn.button('reset')
+          console.log($(`#${data.jobID} .view_info`).get())
+          Prism.highlightElement($(`#${data.jobID} .view_info`).get()[0])
+          $btn.prop('disabled', false).text('Plot')
         };
       },
       error: function (xhr, ajaxOptions, thrownError) {
         // This should seldomly happen. This is triggered nearly only when the connection fails.
-        $btn.button('reset') // On error do this
+        $btn.prop('disabled', false).text('Plot') // On error do this
       }
     })
   };
 }
+
 cheat = function () {
   const reversed_coefficient_dict = dict_reverse(puzzleData.coefficient_dict)
   for (let i in puzzleData.coefficient_array) { // for each pre-set reaction:
@@ -376,9 +390,18 @@ initializePuzzle = function (data) {
     evt.originalEvent.dataTransfer.setData('species', $(this).text().trim())
   })
 }
-viewControl = function (viewName) {
-  $(this).toggleClass('active')
-  $(this).data('target').toggle()
+
+function applyViewToTab ($pane, viewType) {
+  $pane.find('.view_individual, .view_combined, .view_info').hide()
+  const view = $pane.find(`.view_${viewType}`)
+  console.log('Revealing view:', view)
+  view.show()
+}
+
+function updateAllTabViews () {
+  $('#result_panels .tab-pane').each(function () {
+    applyViewToTab($(this), currentViewType)
+  })
 }
 
 const sortableParams = {
@@ -387,6 +410,14 @@ const sortableParams = {
   animation: 150 // ms, animation speed moving items when sorting, `0` — without animation
 }
 $(function () {
+  console.log('Play.js loaded.')
+  // View Type Radio Handler
+  $('input[name="viewType"]').on('change', function () {
+    currentViewType = $(this).val()
+    console.log('Current view type changed to:', currentViewType)
+    updateAllTabViews()
+  })
+  updateAllTabViews()
   // Select Puzzle to load:
   initializePuzzle(puzzleData)
   // bind events:
@@ -396,10 +427,4 @@ $(function () {
   Sortable.create(document.getElementById('conditionTbody'), sortableParams)
   Sortable.create(document.getElementById('result_nav'), sortableParams)
   cheet('c h e a t', cheat)
-  // for "Display result only in:"
-  $('[data-toggle="btns"] .btn').on('click', function () {
-    const $this = $(this)
-    $this.parent().find('.active').removeClass('active')
-    $this.addClass('active')
-  })
 })

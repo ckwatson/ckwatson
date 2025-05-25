@@ -8,33 +8,65 @@
 </head>
 
 <body>
+    <header class="navbar navbar-expand-lg bg-light">
+        <nav class="container-xxl flex-wrap flex-lg-nowrap">
+            <span class="navbar-brand mb-0 h1">
+                <img src="/static/favicon/favicon-96x96.png" alt="Logo" width="24" height="24" class="d-inline-block align-text-top">
+                CKWatson
+            </span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/">Index</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/create">Create
+                          <span class="badge rounded-pill bg-warning">
+                            WIP
+                            <span class="visually-hidden">work in progress</span>
+                          </span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="nav-item ms-md-auto">
+                    <a class="nav-link" href="https://github.com/ckwatson/ckwatson">
+                       <img src="/static/github.svg" alt="GitHub Logo" width="24" height="24">
+                    </a>
+                </div>
+            </div>
+      </nav>
+    </header>
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
-                <div class="jumbotron">
-                    <p>
-                        <h2>"Elementary [Reactions], my dear Watson!"</h2>
-                    </p>
-                    <p>CKWatson is a chemical-experiment-simulator-ish game where you have to guess the correct mechanism for a certain reaction. Each such reaction is called a "Puzzle".</p>
+            <div class="col-12">
+                <div class="mt-4 mb-4 p-5 bg-light">
+                    <h1 class="display-4">"Elementary [Reactions], my dear Watson!"</h1>
+                    <p class="lead">CKWatson is a chemical-experiment-simulator-ish game where you have to guess the correct mechanism for a certain reaction. Each such reaction is called a "Puzzle".</p>
+                    <hr class="my-4">
                     <p>Select a Puzzle below to play with, or <a href="create">create</a> one.</p>
                 </div>
                 <div class="row">
                     {% for puzzleName in puzzleList %}
-                    <a type="button" class="col-md-4 btn" href="play/{{ puzzleName }}">
-                        <div class="thumbnail">
-                            <img alt="{{ puzzleName }}" src="http://picsum.photos/seed/{{ puzzleName }}/400/200/">
-                            <div class="caption">
-                                <h3>{{ puzzleName }}</h3>
+                    <div class="col-md-4 mb-4">
+                        <a href="play/{{ puzzleName }}" class="text-decoration-none">
+                            <div class="card">
+                                <img class="card-img-top" alt="{{ puzzleName }}" src="http://picsum.photos/seed/{{ puzzleName }}/400/200/">
+                                <div class="card-body">
+                                    <h3 class="card-title">{{ puzzleName }}</h3>
+                                </div>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
 </body>
 
 </html>
