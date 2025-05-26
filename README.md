@@ -84,4 +84,3 @@ PYTHONPATH=. uv run pytest --cov=web/ --cov=kernel/engine/ ; uv run coverage-bad
 ```
 
 [pt]: https://docs.pytest.org/en/stable/
-
