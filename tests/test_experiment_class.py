@@ -2,13 +2,13 @@ import numpy as np
 import pytest
 
 from kernel.data.reaction_mechanism_class import reaction_mechanism
-from kernel.engine.experiment_class import experiment
+from kernel.engine.experiment_class import Experiment
 
 
 @pytest.fixture
 def exp():
     mech = mock_reaction_mechanism()
-    exp = experiment(mech, input_temp=25)
+    exp = Experiment(mech, input_temp=25)
     # Simulate a time array and reaction profile
     exp.time_array = np.linspace(0, 10, 11)
     exp.reaction_profile = np.array([[i, i * 2] for i in range(11)])
@@ -65,7 +65,7 @@ def mock_reaction_mechanism() -> reaction_mechanism:
     )
 
 
-def make_exp_with_flat_region(flat_start=8, total=12, n_species=2) -> experiment:
+def make_exp_with_flat_region(flat_start=8, total=12, n_species=2) -> Experiment:
     """
     Create an experiment with a reaction profile that has a flat region.
 
@@ -83,7 +83,7 @@ def make_exp_with_flat_region(flat_start=8, total=12, n_species=2) -> experiment
             np.ones((total - flat_start, n_species)),
         ]
     )
-    return experiment(rm, 25, input_time=time_array, rxn_profile=profile)
+    return Experiment(rm, 25, input_time=time_array, rxn_profile=profile)
 
 
 def test_find_flat_region_removes_flat():
@@ -120,7 +120,7 @@ def test_find_flat_region_all_flat():
     rm = mock_reaction_mechanism()
     time_array = np.linspace(0, 10, 10)
     profile = np.ones((10, 2))
-    exp = experiment(rm, 25, input_time=time_array, rxn_profile=profile)
+    exp = Experiment(rm, 25, input_time=time_array, rxn_profile=profile)
     exp.find_flat_region(job_id="test", threshold=1e-6)
     # Should cut to the first sample
     assert len(exp.time_array) == 1
@@ -133,7 +133,7 @@ def test_find_experimental_Keq_array_basic():
     time_array = np.linspace(0, 10, 5)
     # At equilibrium, [H2] = 2 mol, [H] = 4 mol, so Keq = 2^-1 * 4^2 = 8
     rxn_profile = np.array([[1, 2], [1.5, 3], [2, 4], [2, 4], [2, 4]])
-    exp = experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
+    exp = Experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
     Keq = exp.find_experimental_Keq_array(job_id="test")
     assert np.allclose(Keq, [8])
 
@@ -152,7 +152,7 @@ def test_find_experimental_Keq_array_multiple_reactions():
     mech = MockMech()
     time_array = np.linspace(0, 10, 4)
     rxn_profile = np.array([[1, 2], [2, 3], [3, 4], [3, 4]])
-    exp = experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
+    exp = Experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
     Keq = exp.find_experimental_Keq_array(job_id="test")
     # At equilibrium: [A]=3, [B]=4
     # Keq[0] = 3^1 * 4^1 = 12
@@ -164,7 +164,7 @@ def test_find_experimental_Keq_array_calls_find_flat_region(monkeypatch):
     mech = mock_reaction_mechanism()
     time_array = np.linspace(0, 10, 5)
     rxn_profile = np.array([[1, 2], [1.5, 3], [2, 4], [2, 4], [2, 4]])
-    exp = experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
+    exp = Experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
     called = {}
 
     def fake_find_flat_region(job_id, remove=True):
