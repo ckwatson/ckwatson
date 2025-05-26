@@ -138,26 +138,26 @@ def test_find_experimental_Keq_array_basic():
     assert np.allclose(Keq, [8])
 
 
-def test_find_experimental_Keq_array_multiple_reactions():
-    # 2 reactions: [A]^1*[B]^1, [A]^-1*[B]^2
+def test_find_experimental_keq_array_multiple_reactions():
+    # 2 reactions: B = A, C = B + 2D
     class MockMech:
         number_of_reactions = 2
         number_of_species = 2
-        get_name_set = lambda self: ["A", "B"]
-        coefficient_array = np.array([[1, 1], [-1, 2]])
-        reactant_coefficient_array = np.array([[1, 0], [0, 1]])
-        product_coefficient_array = np.array([[0, 1], [1, 1]])
-        get_energy_set = lambda self: np.array([1.0, 2.0])
+        get_name_set = lambda _: ["A", "B", "C", "D"]
+        coefficient_array = np.array([[1, -1, 0, 0], [0, 1, -1, 2]])
+        reactant_coefficient_array = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
+        product_coefficient_array = np.array([[0, 1, 0, 0], [0, 1, 0, 2]])
+        get_energy_set = lambda _: np.array([1.0, 2.0, 3.0, 4.0])
 
     mech = MockMech()
     time_array = np.linspace(0, 10, 4)
-    rxn_profile = np.array([[1, 2], [2, 3], [3, 4], [3, 4]])
+    rxn_profile = np.array([[1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6], [3, 4, 5, 6]])
     exp = Experiment(mech, 25, input_time=time_array, rxn_profile=rxn_profile)
-    Keq = exp.find_experimental_Keq_array(job_id="test")
-    # At equilibrium: [A]=3, [B]=4
-    # Keq[0] = 3^1 * 4^1 = 12
-    # Keq[1] = 3^-1 * 4^2 = (1/3) * 16 = 16/3 ≈ 5.333
-    assert np.allclose(Keq, [12, 16 / 3])
+    keq = exp.find_experimental_Keq_array(job_id="test")
+    # At equilibrium: [A]=3, [B]=4, [C]=5, [D]=6
+    # Keq[0] = 3^1 * 4^-1 = 3/4 = 0.75
+    # Keq[1] = 4^1 * 5^-1 * 6^2 = 4/5*36 = 28.8
+    assert np.allclose(keq, [0.75, 28.8])
 
 
 def test_find_experimental_Keq_array_calls_find_flat_region(monkeypatch):
