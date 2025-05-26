@@ -174,3 +174,65 @@ def test_find_experimental_Keq_array_calls_find_flat_region(monkeypatch):
     exp.find_flat_region = fake_find_flat_region
     exp.find_experimental_Keq_array(job_id="test")
     assert called["called"]
+
+
+def test_get_mass_action_imbalance_single_reaction():
+    mech = mock_reaction_mechanism()
+    exp = Experiment(mech, 25)
+    # 3D array: (time_points, 1, n_species)
+    # Let's use 2 time points, 2 species
+    conc = np.array(
+        [
+            [[2.0, 4.0]],  # time 0
+            [[3.0, 5.0]],  # time 1
+        ]
+    )
+    # For rxn: H2 -> 2H, reactant_coeff = [1, 0]
+    # So forward_rates = prod(conc ** [1,0], axis=2):
+    # For time 0: 2^1 * 4^0 = 2
+    # For time 1: 3^1 * 5^0 = 3
+    # reverse_rates = prod(conc ** [0,2], axis=2):
+    # For time 0: 4^2 = 16
+    # For time 1: 5^2 = 25
+    emKeq = np.array([2.0])
+    # so reverse_rates/emKeq = [16/2, 25/2]
+    # Q = forward_rates - reverse_rates/emKeq
+    # For time 0: 2 - 16/2 = 2 - 8 = -6
+    # For time 1: 3 - 25/2 = 3 - 12.5 = -9.5
+    result = exp.get_mass_action_imbalance(emKeq, conc)
+    expected = np.array([[-6.0], [-9.5]])
+    np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+
+def test_get_mass_action_imbalance_multiple_reactions():
+    # 2 reactions, 3 species
+    class MockMech:
+        number_of_reactions = 2
+        number_of_species = 3
+        get_name_set = lambda _: ["A", "B", "C"]
+        coefficient_array = np.array([[-1, 1, 0], [0, -1, 1]])
+        reactant_coefficient_array = np.array([[1, 0, 0], [0, 1, 0]])
+        product_coefficient_array = np.array([[0, 1, 0], [0, 0, 1]])
+        get_energy_set = lambda _: np.array([1.0, 2.0, 3.0])
+
+    mech = MockMech()
+    exp = Experiment(mech, 25)
+    # 2 time points, 3 species
+    conc = np.array(
+        [
+            [[2.0, 3.0, 4.0]],
+            [[1.0, 2.0, 3.0]],
+        ]
+    )
+    emKeq = np.array([2.0, 4.0])
+    # For reaction 0: A -> B
+    # reactant_coeff: [1,0,0], product_coeff: [0,1,0]
+    # time 0: forward = 2^1 = 2, reverse = 3^1 = 3, Q = 2 - 3/2 = 0.5
+    # time 1: forward = 1, reverse = 2, Q = 1 - 2/2 = 0
+    # For reaction 1: B -> C
+    # reactant_coeff: [0,1,0], product_coeff: [0,0,1]
+    # time 0: forward = 3, reverse = 4, Q = 3 - 4/4 = 2
+    # time 1: forward = 2, reverse = 3, Q = 2 - 3/4 = 1.25
+    expected = np.array([[0.5, 2.0], [0.0, 1.25]])
+    result = exp.get_mass_action_imbalance(emKeq, conc)
+    np.testing.assert_allclose(result, expected, rtol=1e-6)
