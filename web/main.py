@@ -111,7 +111,7 @@ def handle_plot_request():
         with open(f"puzzles/{data['puzzle']}.puz") as json_file:
             puzzle_definition = json.load(json_file)
             logger.info("    Successfully loaded Puzzle Data from file!")
-        plot_combined, plot_individual = simulate_experiments_and_plot(
+        plot_combined, plot_individual, score = simulate_experiments_and_plot(
             data,
             puzzle_definition,
             temperature,
@@ -126,6 +126,7 @@ def handle_plot_request():
             plot_individual=plot_individual,
             plot_combined=plot_combined,
             temperature=temperature,
+            score=score,
         )  # serving result figure files via "return", so as to save server calls
     except Exception as error:
         # print out last words:

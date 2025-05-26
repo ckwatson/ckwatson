@@ -12,8 +12,23 @@ from kernel.data import (
     reaction_mechanism_class,
     solution_class,
 )
-from kernel.engine import plotter
+from kernel.engine import align, plotter
 from kernel.engine.driver import run_proposed_experiment, run_true_experiment
+
+
+def score_user_answer(true_data: np.ndarray, user_data: np.ndarray) -> float:
+    """
+    Compare user_data to true_data and return a score as a percentage (100 = perfect match).
+    The score is 100 * (1 - (sum(abs(true-user)) / sum(abs(true))))
+    """
+    true_aligned, user_aligned = align.align_for_scoring(true_data, user_data)
+    # Only compare concentrations, not time (assume first row is time)
+    diff = np.abs(true_aligned[1:] - user_aligned[1:])
+    denom = np.abs(true_aligned[1:]).sum()
+    if denom == 0:
+        return 0.0
+    score = 1.0 - (diff.sum() / denom)
+    return max(0.0, min(1.0, score)) * 100
 
 
 def simulate_experiments_and_plot(
@@ -21,7 +36,7 @@ def simulate_experiments_and_plot(
     puzzle_definition: Dict,
     temperature: float,
     diag: bool = False,
-) -> Tuple[str, str]:
+) -> Tuple[str, str, float]:
     """
     Simulate the puzzle and draw plots.
     """
@@ -155,11 +170,16 @@ def simulate_experiments_and_plot(
     logger.info("    (5) Drawing plots... ")
     (plot_individual, plot_combined) = plotter.sub_plots(
         job_id=data["jobID"],
-        plottingDict=puzzle_definition["coefficient_dict"],
+        plotting_dict=puzzle_definition["coefficient_dict"],
         true_data=true_data,
         user_data=user_data,
     )
-    return plot_combined, plot_individual
+    score = None
+    if user_data is not None:
+        score = score_user_answer(true_data, user_data)
+    else:
+        score = 0.0
+    return plot_combined, plot_individual, score
 
 
 def make_reaction_mechanism_for_reagent(

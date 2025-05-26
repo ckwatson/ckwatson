@@ -180,7 +180,8 @@ const plot = function () {
       job.find('.card-footer').html(`Completed at <code>${Date()}</code>`)
       job.find('.view_individual').append(data.plot_individual)
       job.find('.view_combined').append(data.plot_combined)
-      $(`#${data.jobID}_nav`).text(`At ${data.temperature}K`)
+      const scoreText = (typeof data.score === 'number') ? `Score: ${data.score.toFixed(1)}%` : 'No Score'
+      $(`#${data.jobID}_nav`).text(scoreText)
       serverEventListeners[data.jobID].close()
       currentViewType = 'combined'
       $('#button_to_view_combined').click()
