@@ -12,7 +12,7 @@ Within a given set of all substances possibly present, the player's goal is to f
 
 > Elementary [reactions], my dear Watson!
 
-<img width="1000" alt="image" src="https://github.com/user-attachments/assets/5e647c5c-0168-4cdb-8a29-01c8d81bc8db" />
+<img width="1000" alt="image" src="https://github.com/user-attachments/assets/35aef8ab-2a1e-4661-8677-9112d2142b6f" />
 
 [ck]: https://chem.libretexts.org/Bookshelves/General_Chemistry/Map%3A_Chemistry_-_The_Central_Science_(Brown_et_al.)/14%3A_Chemical_Kinetics
 [er]: https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Kinetics/03%3A_Rate_Laws/3.02%3A_Reaction_Mechanisms/3.2.01%3A_Elementary_Reactions
