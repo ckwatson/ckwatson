@@ -19,18 +19,19 @@ $.urlParam = function (name) {
   if (!results) return ''
   return results[1] || ''
 }
-
 const emptyElementaryReaction = $(
   `<tr class="elementaryReaction" draggable="true">
-      <td><input></input></td>
-      <td>+</td>
-      <td><input></input></td>
-      <td>=</td>
-      <td><input></input></td>
-      <td>+</td>
-      <td><input></input></td>
-      <td><button class="btn btn-danger btn-sm removeReaction">Remove</button>
-          <button class="btn btn-success btn-sm balanceReaction">Balance</button></td>
+      <td class="bg-transparent"><input class="form-control"></input></td>
+      <td class="bg-transparent">+</td>
+      <td class="bg-transparent"><input class="form-control"></input></td>
+      <td class="bg-transparent">=</td>
+      <td class="bg-transparent"><input class="form-control"></input></td>
+      <td class="bg-transparent">+</td>
+      <td class="bg-transparent"><input class="form-control"></input></td>
+      <td class="bg-transparent">
+        <button class="btn btn-danger btn-sm removeReaction">Remove</button>
+        <button class="btn btn-success btn-sm balanceReaction">Balance</button>
+      </td>
   </tr>`
 )
 
