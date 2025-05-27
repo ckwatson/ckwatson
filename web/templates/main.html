@@ -71,7 +71,14 @@
                 </p>
             {% elif mode == "create" %}
             <div class="col-12">
-                <p>Work in progress: This is the interface where you can create and submit new puzzles.</p>
+                    <p>Instructions for Creating a Puzzle:</p>
+                    <ol>
+                        <li>Enter all <b>elementary reactions</b> involved in your puzzle. Each row is a reaction. Use the <b>"Add another Elementary Reaction"</b> button as needed.</li>
+                        <li>Ensure each reaction is <b>balanced</b> (row turns green). Only then can you proceed.</li>
+                        <li>Click <b>Proceed...</b> to define the <b>species</b> (free energies, which are reagents, etc.).</li>
+                        <li>Fill in the puzzle name and species details in the modal dialog.</li>
+                        <li>Click <b>Save</b> to submit your puzzle. You will see a success or error message.</li>
+                    </ol>
             {% endif %}
             </div>
         </div>
@@ -81,20 +88,19 @@
             </div>
         </div>
         <div class="row">
-            {% if mode == "play" %} <div class="col-8">
-                {% elif mode == "create" %}<div class="col-12"> {% endif %}
+            <div class="col-{% if mode == "play" %}8{% elif mode == "create" %}12{% endif %}">
                     <table class="table table-hover" id="elementaryReactions">
                         <thead>
                             <tr>
-                                <td>Use</td>
-                                <td>Reactant 1</td>
-                                <td>+</td>
-                                <td>Reactant 2</td>
-                                <td>=</td>
-                                <td>Product 1</td>
-                                <td>+</td>
-                                <td>Product 2</td>
-                                <td>Controls</td>
+                                {% if mode == "play" %} <th>Use</th> {% endif %}
+                                <th>Reactant 1</th>
+                                <th>+</th>
+                                <th>Reactant 2</th>
+                                <th>=</th>
+                                <th>Product 1</th>
+                                <th>+</th>
+                                <th>Product 2</th>
+                                <th>Controls</th>
                             </tr>
                         </thead>
                         <tbody id="elementaryReactionsTbody"></tbody>
@@ -144,40 +150,34 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="speciesModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-            <div class="modal-dialog" role="document">
+        <div class="modal fade" id="speciesModal" tabindex="-1">
+            <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title" id="myModalLabel">
-                            <input id="puzzleName" class="form-control" placeholder="Name Your Puzzle Here..." value="Untitled Puzzle"></input>
+                            <input id="puzzleName" class="form-control" placeholder="Name Your Puzzle Here..." value="Untitled Puzzle" pattern="^[\w\- ]+$" title="Use only letters, numbers, spaces, dashes, and underscores.">
                         </h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <table class="table table-hover table-striped" id="species">
                             <thead>
                                 <tr>
-                                    <td>Species Name</td>
-                                    <td>Free Energy</td>
-                                    <td>Reagent?</td>
+                                    <th>Species Name</th>
+                                    <th>Free Energy</th>
+                                    <th>Reagent?</th>
                                 </tr>
                             </thead>
                             <tbody id="speciesTbody"></tbody>
                         </table>
                     </div>
                     <div class="modal-footer">
-                        {% if ip == "127_0_0_1" %}
-                        <button type="button" id="saveButton" class="btn btn-primary">Save</button>
-                        {% else %}
                         <div class="input-group">
                             <input type="password" id="auth_code" class="form-control" placeholder="Auth Code...">
                             <div class="input-group-append">
                                 <button type="button" id="saveButton" class="btn btn-primary">Save</button>
                             </div>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>

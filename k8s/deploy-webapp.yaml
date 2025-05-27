@@ -29,6 +29,11 @@ spec:
                   key: REDIS_PASSWORD
             - name: REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@redis.default.svc.cluster.local
+            - name: CKWATSON_PUZZLE_AUTH_CODE
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret # You may want to create a separate secret for this
+                  key: CKWATSON_PUZZLE_AUTH_CODE
           image: ckw:latest # For production, use a specific version tag
           imagePullPolicy: Never # required since we are using a local Docker registry
           name: web

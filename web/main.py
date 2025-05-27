@@ -6,6 +6,7 @@ import datetime as dt
 import json
 import logging
 import os
+import re
 import sys
 import traceback
 from pprint import pprint
@@ -16,6 +17,8 @@ import jsonschema
 import numpy as np
 from flask import Flask, jsonify, render_template, request
 from flask_compress import Compress
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_sse import sse
 from jsonschema.exceptions import ValidationError
 
@@ -73,10 +76,14 @@ handler.setFormatter(
 rootLogger.addHandler(handler)
 
 
-AUTH_CODE = "123"
+AUTH_CODE = os.environ.get("CKWATSON_PUZZLE_AUTH_CODE", "123")
 # ongoingJobs = []
 
 app = Flask(__name__)
+# Add rate limiting
+limiter = Limiter(
+    get_remote_address, app=app, default_limits=["200 per day", "50 per hour"]
+)
 # Flask-compress is a Flask extension that provides gzip compression for the web app.
 # It is used to reduce the size of the response data sent from the server to the client,
 # which is helpful for us, because we are going to send tons of SVGs per job.
@@ -139,18 +146,25 @@ def handle_plot_request():
 
 
 @app.route("/save", methods=["POST", "OPTIONS"])
+@limiter.limit("5 per minute")
 def handle_save_request():
     data = request.get_json()  # receive JSON data
     print("Data received:")
     pprint(data)
-    if not request.remote_addr == "127.0.0.1":
-        if not data["auth_code"] == AUTH_CODE:
-            return jsonify(
-                status="danger", message="Authentication failed. Check your password."
-            )
+    # Validate puzzleName for safe filename (alphanumeric, dash, underscore, space)
+    puzzle_name = data.get("puzzleName", "")
+    if not re.match(r"^[\w\- ]+$", puzzle_name):
+        return jsonify(
+            status="danger",
+            message="Invalid puzzle name. Use only letters, numbers, spaces, dashes, and underscores.",
+        )
+    if data["auth_code"] != AUTH_CODE:
+        return jsonify(
+            status="danger", message="Authentication failed. Check your password."
+        )
     # Else, validate with jsonschema:
     existing_puzzles = all_files_in("puzzles")
-    if data["puzzleName"] in existing_puzzles:
+    if puzzle_name in existing_puzzles:
         return jsonify(
             status="danger", message="Puzzle already exists. Try another name."
         )

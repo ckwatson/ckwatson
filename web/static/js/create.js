@@ -1,304 +1,371 @@
-// JS fixes START
+/* global $, _, Sortable, cheet, bootstrap */
+/**
+ * CKWatson Puzzle Creation Page JS
+ * Handles dynamic UI and logic for creating new chemical kinetics puzzles.
+ * Modernized for ES6+ and maintainability.
+ */
+
+// Utility functions
 $.urlParam = function (name) {
-  const results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href)
-  if (!results) {
-    return ''
-  }
+  const results = new RegExp('[?&]' + name + '=([^&#]*)').exec(
+    window.location.href
+  )
+  if (!results) return ''
   return results[1] || ''
 }
-if (typeof (String.prototype.trim) === 'undefined') {
-  String.prototype.trim = function () {
-    return String(this).replace(/^\s+|\s+$/g, '')
-  }
-}
-if (!Object.keys) {
-  Object.keys = function (o) {
-    if (o !== Object(o)) throw new TypeError('Object.keys called on non-object')
-    const ret = []
-    let p
-    for (p in o) { if (Object.prototype.hasOwnProperty.call(o, p)) ret.push(p) }
-    return ret
-  }
-}
 
-dict_reverse = function (obj) {
-  const new_obj = {}
-  for (const prop in obj) {
-    if (obj.hasOwnProperty(prop)) {
-      new_obj[obj[prop]] = prop
-    }
-  }
-  return new_obj
-}
-// JS fixes END
-const emptyElementaryReaction = $(`
-        <tr class="elementaryReaction" draggable="true">
-            <td><input></input></td>
-            <td>+</td>
-            <td><input></input></td>
-            <td>=</td>
-            <td><input></input></td>
-            <td>+</td>
-            <td><input></input></td>
-            <td><button class="btn btn-danger btn-sm removeReaction">Remove</button>
-                <button class="btn btn-success btn-sm balanceReaction">Balance</button></td>
-        </tr>
-`)
-addElementaryReaction = function () {
+const emptyElementaryReaction = $(
+  `<tr class="elementaryReaction" draggable="true">
+      <td><input></input></td>
+      <td>+</td>
+      <td><input></input></td>
+      <td>=</td>
+      <td><input></input></td>
+      <td>+</td>
+      <td><input></input></td>
+      <td><button class="btn btn-danger btn-sm removeReaction">Remove</button>
+          <button class="btn btn-success btn-sm balanceReaction">Balance</button></td>
+  </tr>`
+)
+
+/**
+ * Add a new row for an elementary reaction.
+ */
+const addElementaryReaction = () => {
   const thisElementaryReaction = emptyElementaryReaction.clone()
   $('#elementaryReactionsTbody').append(thisElementaryReaction)
-  cells = thisElementaryReaction.children('td') // just a short-hand.
+  const cells = thisElementaryReaction.children('td')
   cells.children('button.removeReaction').click(removeElementaryReaction)
   cells.children('button.balanceReaction').click(balanceElementaryReaction)
-  cells.children('input').change(onSelectChange)
+  cells.children('input').on('change', onSelectChange)
 }
-removeElementaryReaction = function (e) {
-  const thisRow = $(this).parent().parent()
+
+/**
+ * Remove an elementary reaction row.
+ */
+const removeElementaryReaction = function () {
+  const thisRow = $(this).closest('tr')
   thisRow.remove()
   checkOverallBalance()
 }
-balanceElementaryReaction = function (e) {
-  const thisRow = $(this).parent().parent()
-  const speciesList = $('input', thisRow).map(function (i, obj) {
-    return $(obj).val()
-  })
+
+/**
+ * Attempt to balance an elementary reaction row.
+ */
+const balanceElementaryReaction = function () {
+  const thisRow = $(this).closest('tr')
+  const speciesList = $('input', thisRow).map((i, obj) => $(obj).val())
   let atomsArray = {}
-  for (var i = 0; i < 3; i++) {
-    species = speciesList[i]
-    if (species == '') continue // skip empty species.
+  for (let i = 0; i < 3; i++) {
+    const species = speciesList[i]
+    if (species === '') continue
     atomsArray = moleculeToAtoms(species, atomsArray, i < 2)
-  };
+  }
   let guessedSpecies = ''
-  for (i in atomsArray) {
+  for (const i in atomsArray) {
     const number = atomsArray[i]
     if (number > 0) {
       guessedSpecies += i
-      if (number > 1) {
-        guessedSpecies += number
-      }
+      if (number > 1) guessedSpecies += number
     }
   }
   $('td:nth-child(7) > input', thisRow).val(guessedSpecies)
   checkBalance(thisRow)
   checkOverallBalance()
 }
-// Behavior of the rows of elementary reactions:
-onSelectChange = function (e) {
-  const thisRow = $($(this).parent().parent().get(0))
-  // Check mass balance
+
+/**
+ * On change of any input in a reaction row, re-check balance.
+ */
+const onSelectChange = function () {
+  const thisRow = $(this).closest('tr')
   checkBalance(thisRow)
   checkOverallBalance()
 }
-// functions for checking mass balances of elementary reactions:
-moleculeToAtoms = function (species, atomsArray, ifReactant) {
-  // species is a string matching the form "X2Y3".
-  // atomsArray is the array to be updated
-  atoms = species.match(/([A-Z][a-z]?)(\d*)/g)
-  for (const j in atoms) {
-    atom = atoms[j]
-    number = parseInt(atom.replace(/[^\d]/g, ''), 10) || 1
-    element = atom.replace(/\d*/g, '')
-    if (ifReactant) { // reactant
+
+/**
+ * Parse a chemical formula into atom counts.
+ * @param {string} species
+ * @param {Object} atomsArray
+ * @param {boolean} ifReactant
+ * @returns {Object}
+ */
+const moleculeToAtoms = (species, atomsArray, ifReactant) => {
+  const atoms = species.match(/([A-Z][a-z]?)(\d*)/g) || []
+  for (const atom of atoms) {
+    const number = parseInt(atom.replace(/[^\d]/g, ''), 10) || 1
+    const element = atom.replace(/\d*/g, '')
+    if (ifReactant) {
       atomsArray[element] = (atomsArray[element] || 0) + number
-    } else { // product
+    } else {
       atomsArray[element] = (atomsArray[element] || 0) - number
-    };
-  };
+    }
+  }
   return atomsArray
 }
-checkBalance = function (thisRow) {
-  cells = $('td>input', thisRow).toArray()
-  atomsArray = {}
-  for (var i in cells) {
-    species = cells[i].value
-    if (species == '') continue // skip empty species.
+
+/**
+ * Check if a reaction row is balanced and update its style.
+ * @param {jQuery} thisRow
+ * @returns {boolean}
+ */
+const checkBalance = (thisRow) => {
+  const cells = $('td>input', thisRow).toArray()
+  let atomsArray = {}
+  for (let i = 0; i < cells.length; i++) {
+    const species = cells[i].value
+    if (species === '') continue
     atomsArray = moleculeToAtoms(species, atomsArray, i < 2)
-  };
-  if ($.isEmptyObject(atomsArray) // user emptied the reaction
-        ||
-        (cells[0].value == cells[2].value && cells[1].value == cells[3].value) // or this elem. reaction is trivial
-        ||
-        (cells[0].value == cells[3].value && cells[1].value == cells[2].value)) {
-    thisRow.removeClass('bg-danger-subtle')
-    thisRow.removeClass('bg-success-subtle')
+  }
+  if (
+    $.isEmptyObject(atomsArray) ||
+    (cells[0].value === cells[2].value && cells[1].value === cells[3].value) ||
+    (cells[0].value === cells[3].value && cells[1].value === cells[2].value)
+  ) {
+    thisRow.removeClass('bg-danger-subtle bg-success-subtle')
     return false
   } else {
     let ifBalanced = true
-    for (var i in atomsArray) {
-      if (atomsArray[i] != 0) {
+    for (const i in atomsArray) {
+      if (atomsArray[i] !== 0) {
         ifBalanced = false
         break
       }
-    };
-    // now change visible hints:
+    }
     if (ifBalanced) {
-      thisRow.removeClass('bg-danger-subtle')
-      thisRow.addClass('bg-success-subtle')
+      thisRow.removeClass('bg-danger-subtle').addClass('bg-success-subtle')
     } else {
-      thisRow.addClass('bg-danger-subtle')
-      thisRow.removeClass('bg-success-subtle')
-    };
+      thisRow.addClass('bg-danger-subtle').removeClass('bg-success-subtle')
+    }
     return ifBalanced
   }
 }
-checkOverallBalance = function () {
-  // this function sets the usablilty of the main proceed button by check whether the set of elementary reactions is valid.
-  if ($('#elementaryReactionsTbody>tr.bg-danger-subtle').length == 0 && $('#elementaryReactionsTbody > tr.bg-success-subtle').length > 0) {
-    console.log('Elementary Reactions valid.')
+
+/**
+ * Check if all reactions are valid and enable/disable the proceed button.
+ */
+const checkOverallBalance = () => {
+  if (
+    $('#elementaryReactionsTbody>tr.bg-danger-subtle').length === 0 &&
+    $('#elementaryReactionsTbody > tr.bg-success-subtle').length > 0
+  ) {
     $('#proceedButton').removeClass('disabled').prop('disabled', false)
   } else {
-    console.log('Elementary Reactions invalid.')
     $('#proceedButton').addClass('disabled').prop('disabled', true)
   }
 }
-cheat = function () {
+
+/**
+ * Fill in test reactions for quick demo/testing.
+ */
+const cheat = () => {
   const testRxns = [
     ['NO', 'NO', 'N2O2', ''],
     ['N2O2', 'Br2', 'NOBr', 'NOBr']
   ]
-  for (let i in testRxns) { // for each pre-set reaction:
-    const rxn = testRxns[i]
-    // console.log(rxn); //should be in the shape of ["","","",""];
+  for (const rxn of testRxns) {
     addElementaryReaction()
-    const selects = $('td > input', $('#elementaryReactionsTbody > tr').last()) // select this newly added row.
-    for (i = 0; i < 4; i++) {
+    const selects = $('td > input', $('#elementaryReactionsTbody > tr').last())
+    for (let i = 0; i < 4; i++) {
       $(selects[i]).val(rxn[i])
     }
     checkBalance($('#elementaryReactionsTbody > tr').last())
   }
   checkOverallBalance()
 }
+
 $(function () {
-  // bind events:
+  // Bind events
   $('#addElementaryReaction').click(addElementaryReaction)
-  $('#proceedButton').click(proceed)
+  $('#proceedButton').click(function () {
+    proceed()
+    $('#speciesModal').modal('show')
+  })
   $('#saveButton').click(save)
-  // enable plugins:
-  Sortable.create(document.getElementById('elementaryReactionsTbody'), sortableParams)
+  // Enable plugins
+  Sortable.create(
+    document.getElementById('elementaryReactionsTbody'),
+    sortableParams
+  )
   cheet('c h e a t', cheat)
-  // create the first elementary reaction row:
+  // Create the first elementary reaction row
   addElementaryReaction()
 })
-// stage 2:
-addSpeciesRow = function (speciesName) {
-  if (speciesName != '') {
-    const $this = $(`
-            <tr draggable="true">
-                <td class="speciesName">` + speciesName + `</td>
-                <td class="energy">
-                    <input type="number" value="` + _.random(0, 500) + `"></input>
-                </td>
-                <td class="input-group">
-                    <span class="input-group-addon">
-                        <input class="ifReactant" type="checkbox" checked></input>
-                    </span>
-                    <span class="input-group-btn">
-                        <button type="button" class="btn btn-default btn-sm editPERsButton dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span> <span class="caret"></span></button>
-                        <ul class="PERs dropdown-menu">
-                        </ul>
-                    </span>
-                </td>
-            </tr>`)
-    const options = []
 
-    $('.dropdown-menu a', $this).on('click', function (event) {
-      const $target = $(event.currentTarget)
-      const val = $target.attr('data-value')
-      const $inp = $target.find('input')
-      let idx
-
-      if ((idx = options.indexOf(val)) > -1) {
-        options.splice(idx, 1)
-        setTimeout(function () { $inp.prop('checked', false) }, 0)
-      } else {
-        options.push(val)
-        setTimeout(function () { $inp.prop('checked', true) }, 0)
-      }
-
-      $(event.target).blur()
-
-      console.log(options)
-      return false
-    })
-    // above: Bootstrap drop-menu of checkboxes, from <https://codepen.io/bseth99/pen/fboKH>.
-    for (i in reactions) {
-      const reaction_description = reactions[i][0] + ' + ' + reactions[i][1] + ' -> ' + reactions[i][2] + ' + ' + reactions[i][3]
-      if ($.inArray(speciesName, reactions[i]) > -1) {
-        $thisCheckbox = $('<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="checkbox" checked class="rxn' + i + '"/>' + reaction_description + '</a></li>')
-      } else {
-        $thisCheckbox = $('<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="checkbox" disabled class="rxn' + i + '"/>' + reaction_description + '</a></li>')
-      };
-      $('.dropdown-menu', $this).append($thisCheckbox)
-    }
-    $('#speciesTbody').append($this)
-    $('.ifReactant', $this).click(function () {
-      const $this = $(this).parent().parent()
-      // hide or show the PER indicators:
-      $('.editPERsButton', $this).toggleClass('disabled')
-      // enable or disable the save button because we always need at least ONE reagent:
-      $('#saveButton').prop('disabled', ($('#speciesTbody .ifReactant:checked').length == 0))
-    })
-  } else {
+/**
+ * Add a row for a species in the modal.
+ * @param {string} speciesName
+ */
+const addSpeciesRow = (speciesName) => {
+  if (!speciesName) {
     console.log('Empty speciesName given. Skipped.')
+    return
   }
+  const $this = $(
+    `<tr draggable="true">
+      <td class="speciesName">${speciesName}</td>
+      <td class="energy"><input type="number" value="${_.random(0, 500)}"></td>
+      <td class="input-group">
+        <span class="input-group-addon">
+          <input class="ifReactant" type="checkbox" checked>
+        </span>
+        <span class="input-group-btn">
+          <button type="button" class="btn btn-default btn-sm editPERsButton dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select which reactions this species is a reagent for. (Checked = this species is a reagent in that reaction)" data-bs-toggle="tooltip" data-bs-placement="top">
+            <span class="bi bi-gear"></span> <span class="bi bi-caret-down-fill"></span>
+          </button>
+          <ul class="PERs dropdown-menu p-2" style="min-width: 340px;">
+            <li class="dropdown-header fw-bold text-primary pb-2">During ${speciesName}'s pre-equilibrium process, these reactions should happen:</li>
+          </ul>
+        </span>
+      </td>
+    </tr>`
+  )
+  const options = []
+  $('.dropdown-menu a', $this).on('click', function (event) {
+    const $target = $(event.currentTarget)
+    const val = $target.attr('data-value')
+    const $inp = $target.find('input')
+    let idx
+    if ((idx = options.indexOf(val)) > -1) {
+      options.splice(idx, 1)
+      setTimeout(() => $inp.prop('checked', false), 0)
+    } else {
+      options.push(val)
+      setTimeout(() => $inp.prop('checked', true), 0)
+    }
+    $(event.target).blur()
+    return false
+  })
+  for (const i in reactions) {
+    const reactionDescription = `${reactions[i][0]} + ${reactions[i][1]} → ${reactions[i][2]} + ${reactions[i][3]}`
+    let thisCheckbox
+    if ($.inArray(speciesName, reactions[i]) > -1) {
+      thisCheckbox = $(
+        `<li class="dropdown-item px-2 py-1 d-flex align-items-center">
+          <input type="checkbox" checked class="form-check-input me-2 rxn${i}" style="margin-top:0;" title="This species is a reagent in this reaction.">
+          <span>${reactionDescription}</span>
+        </li>`
+      )
+    } else {
+      thisCheckbox = $(
+        `<li class="dropdown-item px-2 py-1 d-flex align-items-center">
+          <input type="checkbox" disabled class="form-check-input me-2 rxn${i}" style="margin-top:0;" title="This species does not participate in this reaction.">
+          <span class="text-muted">${reactionDescription}</span>
+        </li>`
+      )
+    }
+    $('.dropdown-menu', $this).append(thisCheckbox)
+  }
+  $('#speciesTbody').append($this)
+  $('.ifReactant', $this).click(function () {
+    const $row = $(this).closest('tr')
+    $('.editPERsButton', $row).toggleClass('disabled')
+    $('#saveButton').prop(
+      'disabled',
+      $('#speciesTbody .ifReactant:checked').length === 0
+    )
+  })
+  // Enable Bootstrap tooltips for dynamically created elements
+  setTimeout(() => {
+    $("[data-bs-toggle='tooltip']", $this).tooltip({ trigger: 'hover' })
+  }, 0)
 }
+
 let reactions
 let speciesList
-proceed = function () {
-  // empty species list that might be populated from last time clicking proceed button
+
+/**
+ * Gather reactions and species, populate modal, and suggest puzzle name.
+ */
+const proceed = () => {
   speciesList = []
-  // Get reactions and species:
-  reactions = $.makeArray($('#elementaryReactionsTbody>tr.bg-success-subtle').map(function () {
-    return [$('td>input', this).map(function () {
-      speciesList.push(this.value)
-      return this.value
-    }).toArray()]
-  })).sort()
-  // empty species table that might be populated from last time clicking proceed button:
+  reactions = $.makeArray(
+    $('#elementaryReactionsTbody>tr.bg-success-subtle').map(function () {
+      return [
+        $('td>input', this)
+          .map(function () {
+            speciesList.push(this.value)
+            return this.value
+          })
+          .toArray()
+      ]
+    })
+  ).sort()
   $('#speciesTbody').html('')
-  // Get species
-  speciesList = _.uniq(speciesList, function (item, key, a) { return item }) // unique-ify (i.e. remove repetitive species)
-  // newSpeciesList = _.difference(speciesList, available_molecules);
-  // add each species to the species table in stage 2:
+  speciesList = _.uniq(speciesList, (item) => item)
   _.each(speciesList, addSpeciesRow)
-  // suggest a puzzleName:
-  if ($('#puzzleName').val() == 'Untitled Puzzle') {
+  if ($('#puzzleName').val() === 'Untitled Puzzle') {
     $('#puzzleName').val(speciesList.join(' '))
-  };
-  console.log('speciesList', speciesList, 'reactions', reactions)
+  }
 }
-pushAlert = function (status, message) {
-  const id_int = new Date().getTime()
-  $('<div id="' + id_int + '" class="alert alert-' + status + ` alert-dismissible" role="alert">
-           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-           ` + message + `
-       </div>`).appendTo('#speciesModal .modal-body').fadeTo(3000, 500).slideUp(500, function () {
-    $(this).alert('close')
-  })
+
+/**
+ * Show a Bootstrap Toast alert at the top right of the page.
+ * @param {string} status - Bootstrap alert status (success, danger, warning, info)
+ * @param {string} message - Message to display
+ */
+const pushAlert = (status, message) => {
+  // Remove any previous toast
+  $('#ckwatson-toast').remove()
+  // Toast HTML
+  const toastHtml = `
+    <div id="ckwatson-toast" class="toast align-items-center text-bg-${status} border-0 position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true" style="z-index: 9999; min-width: 300px;">
+      <div class="d-flex">
+        <div class="toast-body">
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>`
+  // Append to body
+  $('body').append(toastHtml)
+  // Show toast using Bootstrap 5
+  const toastEl = document.getElementById('ckwatson-toast')
+  const toast = new bootstrap.Toast(toastEl, { delay: 3000 })
+  toast.show()
 }
-save = function () {
+
+// Utility: Validate puzzle name for safe filename (alphanumeric, dash, underscore, space)
+function isValidPuzzleName (name) {
+  return /^[\w\- ]+$/.test(name)
+}
+
+/**
+ * Save the puzzle by sending data to the backend.
+ */
+const save = function () {
   const $btn = $(this).button('loading')
-  // get required information:
+  const puzzleName = $('#puzzleName').val()
+  if (!isValidPuzzleName(puzzleName)) {
+    pushAlert(
+      'danger',
+      'Invalid puzzle name. Use only letters, numbers, spaces, dashes, and underscores.'
+    )
+    $btn.button('reset')
+    return
+  }
   const speciesNames = []
   const speciesIfReactants = []
   const speciesEnergies = []
   const reagentPERs = {}
-  $('#speciesTbody > tr').map(function () {
+  $('#speciesTbody > tr').each(function () {
     const $this = $(this)
     const name = $('.speciesName', $this).text().trim()
     const ifReactant = $('.ifReactant', $this).is(':checked')
     if (ifReactant) {
-      const reagentPER = $('.PERs input', $this).map(function () { return this.checked }).get()
+      const reagentPER = $('.PERs input', $this)
+        .map(function () {
+          return this.checked
+        })
+        .get()
       reagentPERs[name] = reagentPER
-    };
+    }
     const energy = parseFloat($('.energy > input', $this).val())
     speciesNames.push(name)
     speciesIfReactants.push(ifReactant)
     speciesEnergies.push(energy)
-    // return [name, ifReactant, energy];
   })
-  // form parameter object:
-  parameters = {
+  const parameters = {
     auth_code: $('#auth_code').val(),
     puzzleName: $('#puzzleName').val(),
     reactions,
@@ -307,8 +374,7 @@ save = function () {
     speciesEnergies,
     reagentPERs
   }
-  console.log(parameters)
-  // ajax -- post the job:
+  console.log('About to send data to server:', parameters)
   $.ajax({
     url: '/save',
     type: 'POST',
@@ -316,48 +382,30 @@ save = function () {
     data: JSON.stringify(parameters),
     dataType: 'json',
     success: function (data) {
-      console.log('Responsed:', data)
+      console.log('Server responded:', data)
       pushAlert(data.status, data.message)
       $btn.button('reset')
+      if (data.status === 'success') {
+        // Show the success message, then reset the form for a new puzzle
+        $('#speciesModal').modal('hide')
+        $('#elementaryReactionsTbody').empty()
+        addElementaryReaction()
+        $('#speciesTbody').empty()
+        $('#puzzleName').val('Untitled Puzzle')
+        $('#auth_code').val('')
+        $('#proceedButton').addClass('disabled').prop('disabled', true)
+      }
     },
     error: function (xhr, ajaxOptions, thrownError) {
       pushAlert('danger', 'Error contacting the server: ' + thrownError)
-      $btn.button('reset') // On error do this
+      $btn.button('reset')
     }
   })
-  // close modal
-}
-//= ============================================================
-
-const hasEmptyElementaryReaction = true
-if_a_reactant_exists = function () {
-  // check whether a reactant exists -- a chemical reaction without a controllable reactant is pointless, right?
-  // this works like "as long as there is one set to true, I say true."
-  return $('#conditionTbody input.ifReactant').is(':checked')
 }
 
-addSpecies = function () {
-  addSpeciesRow('', 'custom')
-}
-// Behavior of the rows of elementary reactions -- END
-
-viewControl = function (viewName) {
-  $(this).toggleClass('active')
-  $(this).data('target').toggle()
-}
-
-var sortableParams = {
-  ghostClass: 'bg-info', // Class name for the drop placeholder
-  chosenClass: 'bg-primary', // Class name for the chosen item
-  animation: 150 // ms, animation speed moving items when sorting, `0` — without animation
-}
-removeSpecies = function (speciesName) {
-  // remove the row of this molecule from the sidebar
-  $('.species#' + speciesName).remove()
-}
-allSpeciesInvolvedInReactions = function () {
-  return _.uniq($('tr.elementaryReaction>td>select').map(function (i, obj) { return $(obj).val() }))
-}
-allSpeciesInvolvedInSpeciesList = function () {
-  return _.uniq($('.species').map(function (i, obj) { return $(obj).text() }))
+// Utility and UI helpers
+const sortableParams = {
+  ghostClass: 'bg-info',
+  chosenClass: 'bg-primary',
+  animation: 150
 }
