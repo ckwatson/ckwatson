@@ -3,11 +3,10 @@
 <head>
     {% include "_favicon.html" %}
     <title>{% block title %}{% endblock %} | CKWatson</title>
-    <link href="/static/css/main.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism.min.css" crossorigin="anonymous" />
     {% block head %}{% endblock %}
 </head>
-<body class="unselectable">
+<body class="d-flex flex-column h-100">
     <header class="navbar navbar-expand-lg bg-light">
         <nav class="container-xxl flex-wrap flex-lg-nowrap">
             <span class="navbar-brand mb-0 h1">

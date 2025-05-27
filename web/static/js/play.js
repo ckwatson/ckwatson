@@ -5,15 +5,15 @@ let currentViewType = 'info'
 
 const emptyElementaryReaction = $(`
   <tr class="elementaryReaction" draggable="true">
-    <td><input type="checkbox" class="form-check-input" checked></td>
-    <td><select class="form-control"><option value=""></option></select></td>
-    <td>+</td>
-    <td><select class="form-control"><option value=""></option></select></td>
-    <td>=</td>
-    <td><select class="form-control"><option value=""></option></select></td>
-    <td>+</td>
-    <td><select class="form-control"><option value=""></option></select></td>
-    <td><button type="submit" class="btn btn-danger btn-sm removeReaction">Remove</button></td>
+    <td class="bg-transparent"><input type="checkbox" class="form-check-input" checked></td>
+    <td class="bg-transparent"><select class="form-control"><option value=""></option></select></td>
+    <td class="bg-transparent">+</td>
+    <td class="bg-transparent"><select class="form-control"><option value=""></option></select></td>
+    <td class="bg-transparent">=</td>
+    <td class="bg-transparent"><select class="form-control"><option value=""></option></select></td>
+    <td class="bg-transparent">+</td>
+    <td class="bg-transparent"><select class="form-control"><option value=""></option></select></td>
+    <td class="bg-transparent"><button type="submit" class="btn btn-danger btn-sm removeReaction">Remove</button></td>
   </tr>
 `)
 
@@ -214,8 +214,8 @@ const initializePuzzle = (data) => {
   Object.entries(data.coefficient_dict).forEach(([key]) => {
     const isReactant = data.reagents.includes(key)
     const row = isReactant
-      ? `<tr class="reactant" draggable="true"><td class="species" draggable="true">${key}</td><td><input class="amount" type="number" value="1" min="0"></td><td><input class="temperature" type="number" value="273.15" min="0"></td></tr>`
-      : `<tr class="nonReactant" draggable="true"><td class="species" draggable="true">${key}</td><td>-</td><td>-</td></tr>`
+      ? `<tr class="reactant" draggable="true"><td class="species" draggable="true">${key}</td><td><input class="amount w-50" type="number" value="1" min="0"></td><td><input class="temperature w-50" type="number" value="273.15" min="0"></td></tr>`
+      : `<tr class="nonReactant" draggable="true"><td class="species" draggable="true">${key}</td><td></td><td></td></tr>`
     $('#conditionTbody').append(row)
   })
 
