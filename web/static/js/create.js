@@ -38,7 +38,7 @@ const emptyElementaryReaction = $(
  * Add a new row for an elementary reaction.
  */
 const checkAndUpdateProceedButton = () => {
-  checkOverallBalance('#elementaryReactionsTbody>tr', '#proceedButton')
+  checkOverallBalance('#proceedButton')
 }
 
 const addElementaryReaction = () => {

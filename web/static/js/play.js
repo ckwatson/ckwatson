@@ -21,13 +21,13 @@ const emptyElementaryReaction = $(`
 const onSelectChange = function () {
   const row = $(this).closest('tr')
   checkBalance(row, 'select')
-  checkOverallBalance('#elementaryReactionsTbody>tr', '#plotButton')
+  checkOverallBalance('#plotButton')
 }
 
 /** Remove a reaction row */
 const removeElementaryReaction = function () {
   $(this).closest('tr').remove()
-  checkOverallBalance('#elementaryReactionsTbody>tr', '#plotButton')
+  checkOverallBalance('#plotButton')
 }
 
 /** Add new reaction row to the DOM and bind behavior */
@@ -195,10 +195,10 @@ const cheat = () => {
       for (let i = 0; i < 4; i++) {
         $(selects[i]).val(slots[i])
       }
-      checkBalance($('#elementaryReactionsTbody > tr').last())
+      checkBalance($('#elementaryReactionsTbody > tr').last(), 'select')
     }
   }
-  checkOverallBalance()
+  checkOverallBalance('#plotButton')
 }
 
 /** Initialize puzzle UI */

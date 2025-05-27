@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Puzzle: {{ puzzle_name }}{% endblock %}
+{% block content %}
+<div class="container pt-4" id="controlPanel">
+    <div class="row pt-2">
+        <div class="col-12">
+            <h1>Puzzle: {{ puzzle_name }}</h1>
+        </div>
+    </div>
+    <div class="row pt-3 pb-2" id="instruction">
+        <div class="col-12">
+            <p>Take a look at all the species available in this puzzle. Try coming up with as many elementary reactions as you can!</p>
+            <p>When you have composed at least one <a href="https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Kinetics/03%3A_Rate_Laws/3.02%3A_Reaction_Mechanisms/3.2.01%3A_Elementary_Reactions">elementary reaction</a> and all elementary reactions are balanced (indicated by a faint green background behind those rows), the "Plot" button will be available. Once you click it, we'll run the experiment in two ways: with the correct answer (that is, all elementary reactions) and with your answer. Then, we will plot the results: the correct answer will be shown in solid curves, while your answer will be shown in dashed curves. You can then compare the two and see how well you did.</p>
+            <p>The experiments are conducted as if several species has been sitting in their own canister or beaker and then put together. For these "starting species", you can specify the starting concentrations and temperatures of some species. You can also tweak the "ambient" temperature of the reaction.</p>
+            <p>Since some species spontaneously react with itself, we will always run pre-equilibration for each of the starting species. This will affect the starting concentrations of any species involved, so the curves may not start at the concentrations you specified.</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-8">
+            <h3>Elementary Reactions</h3>
+            {% include "_elementary_reactions_table.html" %}
+        </div>
+        <div class="col-md-4">
+            <table class="table table-hover table-striped" id="condition">
+                <thead>
+                    <tr>
+                        <td>Species</td>
+                        <td>Concentration (mol)</td>
+                        <td>Temperature (K)</td>
+                    </tr>
+                </thead>
+                <tbody id="conditionTbody"></tbody>
+                <tfoot>
+                    <tr>
+                        <td>( ↑ Draggable)</td>
+                        <td>
+                            <input disabled checked type="checkbox">
+                            Pre-equilibrate
+                        </td>
+                        <td>
+                            React at
+                            <input id="reactionTemperature" type="number" value="300"> K.
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            <button class="btn btn-primary" disabled="true" id="plotButton" style="width:100%" type="button">Plot</button>
+        </div>
+    </div>
+    <div class="container pt-5" id="container">
+        <div class="row">
+            <div class="col-12">
+                <h3>Results, Showing
+                    <div class="btn-group" role="group" id="viewControl" aria-label="radio toggle button group">
+                        <input type="radio" class="btn-check" name="viewType" value="individual" autocomplete="off" id="button_to_view_individual">
+                        <label class="btn btn-outline-secondary" for="button_to_view_individual">Individual Figures</label>
+                        <input type="radio" class="btn-check" name="viewType" value="combined" autocomplete="off" id="button_to_view_combined">
+                        <label class="btn btn-outline-secondary" for="button_to_view_combined">Combined Figure</label>
+                        <input type="radio" class="btn-check" name="viewType" value="info" autocomplete="off" id="button_to_view_info">
+                        <label class="btn btn-outline-secondary" for="button_to_view_info">Messages</label>
+                    </div>
+                </h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <ul id="result_nav" class="nav nav-tabs" role="tablist"></ul>
+                <div id="result_panels" class="tab-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/play.js"></script>
+<script>
+    puzzleName = "{{ puzzle_name }}";
+    puzzleData = {{ puzzle_data | safe }};
+    ip = "{{ ip }}";
+    mode = "play";
+</script>
+{% endblock %}

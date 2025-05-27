@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Create{% endblock %}
+{% block content %}
+<div class="container pt-4" id="controlPanel">
+    <div class="row pt-2">
+        <div class="col-12">
+            <h1>CKWatson - create</h1>
+        </div>
+    </div>
+    <div class="row pt-3 pb-2" id="instruction">
+        <div class="col-12">
+            <p>Instructions for Creating a Puzzle:</p>
+            <ol>
+                <li>Enter all <b>elementary reactions</b> involved in your puzzle. Each row is a reaction. Use the <b>"Add another Elementary Reaction"</b> button as needed.</li>
+                <li>Ensure each reaction is <b>balanced</b> (row turns green). Only then can you proceed.</li>
+                <li>Click <b>Proceed...</b> to define the <b>species</b> (free energies, which are reagents, etc.).</li>
+                <li>Fill in the puzzle name and species details in the modal dialog.</li>
+                <li>Click <b>Save</b> to submit your puzzle. You will see a success or error message.</li>
+            </ol>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <h3>Elementary Reactions</h3>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            {% include "_elementary_reactions_table.html" %}
+        </div>
+    </div>
+    <div class="container" id="resultsPanel">
+        <div class="row">
+            <div class="col-12">
+                <h3>Control &amp; Result</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <button class="btn btn-primary" id="proceedButton" style="width:100%" disabled="true" type="button" data-toggle="modal" data-target="#speciesModal">Proceed...</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="speciesModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">
+                        <input id="puzzleName" class="form-control" placeholder="Name Your Puzzle Here..." value="Untitled Puzzle" pattern="^[\w\- ]+$" title="Use only letters, numbers, spaces, dashes, and underscores.">
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-hover table-striped" id="species">
+                        <thead>
+                            <tr>
+                                <th>Species Name</th>
+                                <th>Free Energy</th>
+                                <th>Reagent?</th>
+                            </tr>
+                        </thead>
+                        <tbody id="speciesTbody"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="input-group">
+                        <input type="password" id="auth_code" class="form-control" placeholder="Auth Code...">
+                        <div class="input-group-append">
+                            <button type="button" id="saveButton" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/create.js"></script>
+<script>
+    mode = "create";
+</script>
+{% endblock %}

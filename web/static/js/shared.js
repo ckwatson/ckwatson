@@ -77,13 +77,12 @@ export function checkBalance (row, inputSelector = 'input') {
 
 /**
  * Check if all reactions are valid and enable/disable the proceed/plot button.
- * @param {string} rowSelector
  * @param {string} buttonSelector
  */
-export function checkOverallBalance (rowSelector, buttonSelector) {
+export function checkOverallBalance (buttonSelector) {
   if (
-    $(`${rowSelector}.bg-danger-subtle`).length === 0 &&
-    $(`${rowSelector}.bg-success-subtle`).length > 0
+    $('#elementaryReactionsTbody>tr.bg-danger-subtle').length === 0 &&
+    $('#elementaryReactionsTbody>tr.bg-success-subtle').length > 0
   ) {
     $(buttonSelector).removeClass('disabled').prop('disabled', false)
   } else {

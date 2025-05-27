@@ -178,29 +178,24 @@ def handle_save_request():
 
 @app.route("/create")
 def serve_page_create():
-    return render_template(
-        "main.html", mode="create", ip=request.remote_addr.replace(".", "_")
-    )
+    ip = request.remote_addr.replace(".", "_") if request.remote_addr else "unknown_ip"
+    return render_template("create.html", ip=ip)
 
 
-@app.route("/play/<puzzleName>")
-def serve_page_play(puzzleName):
-    with open("puzzles/" + puzzleName + ".puz") as json_file:
-        puzzleData = json_file.read()
+@app.route("/play/<puzzle_name>")
+def serve_page_play(puzzle_name):
+    with open(f"puzzles/{puzzle_name}.puz") as json_file:
+        puzzle_data = json_file.read()
+    ip = request.remote_addr.replace(".", "_") if request.remote_addr else "unknown_ip"
     return render_template(
-        "main.html",
-        mode="play",
-        puzzleName=puzzleName,
-        puzzleData=puzzleData,
-        ip=(
-            request.remote_addr.replace(".", "_")
-            if request.remote_addr
-            else "unknown_ip"
-        ),
+        "play.html",
+        puzzle_name=puzzle_name,
+        puzzle_data=puzzle_data,
+        ip=ip,
     )
 
 
 @app.route("/")
 def serve_page_index():
-    puzzleList = all_files_in("puzzles", end=".puz")
-    return render_template("index.html", puzzleList=puzzleList)
+    puzzle_list = all_files_in("puzzles", end=".puz")
+    return render_template("index.html", puzzle_list=puzzle_list)
