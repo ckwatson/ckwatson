@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.rdb
+*.log
+*.env
+.env*
+__pycache__/
+kernel/__pycache__/
+web/__pycache__/
+tests/__pycache__/
+.git
+.gitignore
+k8s/*.yaml

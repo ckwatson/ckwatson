@@ -50,20 +50,29 @@ To run CKWatson with Redis, simply use `docker-compose up`.
 
 ### Via Kubernetes
 
-I will be using [minikube](https://minikube.sigs.k8s.io/) in this walkthrough. I will be using the local Docker Registry as the source of the Kubenetes image.
+I will be using [minikube](https://minikube.sigs.k8s.io/) in this walkthrough. I will be using the local Docker Registry as the source of the Kubernetes image.
+
+> **Note:** For production or remote clusters, push your image to a container registry and set `imagePullPolicy: IfNotPresent` or `Always` in the deployment YAML.
+> The provided YAMLs now include resource requests/limits and health checks for better stability.
 
 ```shell
 # Start the cluster:
 minikube start
-# Register the Docker Registry to minikube -- This is because we will be building the image from the Dockerfile for Kubenetes:
+# Register the Docker Registry to minikube -- This is because we will be building the image from the Dockerfile for Kubernetes:
 eval $(minikube docker-env)
-# Build the Docker image for Kubenetes:
+# Build the Docker image for Kubernetes:
 docker build -t ckw .
-# Apply the Deployment (which manages the Pods/"virtual hosts" in the minikube cluster for the app) as well as the Service (which is a Load Balancer in this case that exposes the web app in the Pods) using the manifest file:
+# Apply the Deployment and Service manifests:
 kubectl apply -f ./k8s
 # Access the web app:
 minikube service web
 ```
+
+#### Troubleshooting
+
+- If you see `ImagePullBackOff`, ensure you ran `eval $(minikube docker-env)` before building.
+- For production, set up resource limits and health checks (already included in the YAMLs).
+- For Redis security in production, set a password and update the deployment and app config accordingly.
 
 ### On Heroku
 

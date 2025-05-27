@@ -6,6 +6,7 @@ metadata:
     app: web
   name: web
 spec:
+  type: ClusterIP # For minikube, use 'minikube service web' to access externally
   ports:
     - name: "80"
       port: 80
