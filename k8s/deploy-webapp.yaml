@@ -22,9 +22,14 @@ spec:
     spec:
       containers:
         - env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
             - name: REDIS_URL
-              value: redis://redis.default.svc.cluster.local
-          image: ckw:latest
+              value: redis://:$(REDIS_PASSWORD)@redis.default.svc.cluster.local
+          image: ckw:latest # For production, use a specific version tag
           imagePullPolicy: Never # required since we are using a local Docker registry
           name: web
           ports:
