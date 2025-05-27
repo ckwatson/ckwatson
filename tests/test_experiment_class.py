@@ -148,6 +148,7 @@ def test_find_experimental_keq_array_multiple_reactions():
         reactant_coefficient_array = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
         product_coefficient_array = np.array([[0, 1, 0, 0], [0, 1, 0, 2]])
         get_energy_set = lambda _: np.array([1.0, 2.0, 3.0, 4.0])
+        transition_state_energies = None
 
     mech = MockMech()
     time_array = np.linspace(0, 10, 4)
@@ -214,6 +215,7 @@ def test_get_mass_action_imbalance_multiple_reactions():
         reactant_coefficient_array = np.array([[1, 0, 0], [0, 1, 0]])
         product_coefficient_array = np.array([[0, 1, 0], [0, 0, 1]])
         get_energy_set = lambda _: np.array([1.0, 2.0, 3.0])
+        transition_state_energies = None
 
     mech = MockMech()
     exp = Experiment(mech, 25)
