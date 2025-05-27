@@ -1,14 +1,5 @@
+import { reverseDict, checkBalance, checkOverallBalance } from './shared.js'
 /* global $, md5, puzzleName, puzzleData, ip, Sortable, Prism, cheet, EventSource */
-/** Utility: Reverse dictionary mapping {key: value} -> {value: key} */
-const reverseDict = (obj) => {
-  const reversed = {}
-  for (const key in obj) {
-    if (Object.hasOwn(obj, key)) {
-      reversed[obj[key]] = key
-    }
-  }
-  return reversed
-}
 
 let currentViewType = 'info'
 
@@ -26,58 +17,17 @@ const emptyElementaryReaction = $(`
   </tr>
 `)
 
-/** Enable plot button only if at least one balanced reaction and none unbalanced */
-const checkOverallBalance = () => {
-  const hasErrors =
-    $('#elementaryReactionsTbody>tr.bg-danger-subtle').length > 0
-  const hasValid =
-    $('#elementaryReactionsTbody > tr.bg-success-subtle').length > 0
-  $('#plotButton')
-    .prop('disabled', !(hasValid && !hasErrors))
-    .toggleClass('disabled', hasErrors || !hasValid)
-}
-
-/** Check balance of atoms in a given reaction row */
-const checkBalance = (row) => {
-  const atomsArray = {}
-  const selects = $('td>select', row).toArray()
-
-  selects.forEach((cell, idx) => {
-    const species = cell.value
-    if (!species) return
-    const atoms = species.match(/([A-Z][a-z]?)(\d*)/g) || []
-
-    atoms.forEach((atom) => {
-      const element = atom.replace(/\d*/g, '')
-      const number = parseInt(atom.replace(/[^\d]/g, ''), 10) || 1
-      atomsArray[element] =
-        (atomsArray[element] || 0) + (idx < 2 ? number : -number)
-    })
-  })
-
-  if (Object.keys(atomsArray).length === 0) {
-    row.removeClass('bg-danger-subtle bg-success-subtle')
-    return
-  }
-
-  const isBalanced = Object.values(atomsArray).every((val) => val === 0)
-  row
-    .toggleClass('bg-success-subtle', isBalanced)
-    .toggleClass('bg-danger-subtle', !isBalanced)
-  return isBalanced
-}
-
 /** Handler for select change in a reaction row */
 const onSelectChange = function () {
   const row = $(this).closest('tr')
-  checkBalance(row)
-  checkOverallBalance()
+  checkBalance(row, 'select')
+  checkOverallBalance('#elementaryReactionsTbody>tr', '#plotButton')
 }
 
 /** Remove a reaction row */
 const removeElementaryReaction = function () {
   $(this).closest('tr').remove()
-  checkOverallBalance()
+  checkOverallBalance('#elementaryReactionsTbody>tr', '#plotButton')
 }
 
 /** Add new reaction row to the DOM and bind behavior */
@@ -101,8 +51,10 @@ const addElementaryReaction = () => {
 const serverEventListeners = {}
 /** Submit reactions to server and initialize job tracking */
 const plot = function () {
-  const reactions = Array.from($('#elementaryReactionsTbody>tr.bg-success-subtle')).map(row => {
-    return Array.from($(row).find('td > select')).map(select => select.value)
+  const reactions = Array.from(
+    $('#elementaryReactionsTbody>tr.bg-success-subtle')
+  ).map((row) => {
+    return Array.from($(row).find('td > select')).map((select) => select.value)
   })
 
   const temperature = parseFloat($('#reactionTemperature').val(), 10)
@@ -180,7 +132,10 @@ const plot = function () {
       job.find('.card-footer').html(`Completed at <code>${Date()}</code>`)
       job.find('.view_individual').append(data.plot_individual)
       job.find('.view_combined').append(data.plot_combined)
-      const scoreText = (typeof data.score === 'number') ? `Score: ${data.score.toFixed(1)}%` : 'No Score'
+      const scoreText =
+        typeof data.score === 'number'
+          ? `Score: ${data.score.toFixed(1)}%`
+          : 'No Score'
       $(`#${data.jobID}_nav`).text(scoreText)
       serverEventListeners[data.jobID].close()
       currentViewType = 'combined'

@@ -5,6 +5,12 @@
  * Modernized for ES6+ and maintainability.
  */
 
+import {
+  moleculeToAtoms,
+  checkBalance,
+  checkOverallBalance
+} from './shared.js'
+
 // Utility functions
 $.urlParam = function (name) {
   const results = new RegExp('[?&]' + name + '=([^&#]*)').exec(
@@ -31,6 +37,10 @@ const emptyElementaryReaction = $(
 /**
  * Add a new row for an elementary reaction.
  */
+const checkAndUpdateProceedButton = () => {
+  checkOverallBalance('#elementaryReactionsTbody>tr', '#proceedButton')
+}
+
 const addElementaryReaction = () => {
   const thisElementaryReaction = emptyElementaryReaction.clone()
   $('#elementaryReactionsTbody').append(thisElementaryReaction)
@@ -38,6 +48,7 @@ const addElementaryReaction = () => {
   cells.children('button.removeReaction').click(removeElementaryReaction)
   cells.children('button.balanceReaction').click(balanceElementaryReaction)
   cells.children('input').on('change', onSelectChange)
+  checkAndUpdateProceedButton()
 }
 
 /**
@@ -46,7 +57,7 @@ const addElementaryReaction = () => {
 const removeElementaryReaction = function () {
   const thisRow = $(this).closest('tr')
   thisRow.remove()
-  checkOverallBalance()
+  checkAndUpdateProceedButton()
 }
 
 /**
@@ -70,8 +81,8 @@ const balanceElementaryReaction = function () {
     }
   }
   $('td:nth-child(7) > input', thisRow).val(guessedSpecies)
-  checkBalance(thisRow)
-  checkOverallBalance()
+  checkBalance(thisRow, 'input')
+  checkAndUpdateProceedButton()
 }
 
 /**
@@ -79,80 +90,8 @@ const balanceElementaryReaction = function () {
  */
 const onSelectChange = function () {
   const thisRow = $(this).closest('tr')
-  checkBalance(thisRow)
-  checkOverallBalance()
-}
-
-/**
- * Parse a chemical formula into atom counts.
- * @param {string} species
- * @param {Object} atomsArray
- * @param {boolean} ifReactant
- * @returns {Object}
- */
-const moleculeToAtoms = (species, atomsArray, ifReactant) => {
-  const atoms = species.match(/([A-Z][a-z]?)(\d*)/g) || []
-  for (const atom of atoms) {
-    const number = parseInt(atom.replace(/[^\d]/g, ''), 10) || 1
-    const element = atom.replace(/\d*/g, '')
-    if (ifReactant) {
-      atomsArray[element] = (atomsArray[element] || 0) + number
-    } else {
-      atomsArray[element] = (atomsArray[element] || 0) - number
-    }
-  }
-  return atomsArray
-}
-
-/**
- * Check if a reaction row is balanced and update its style.
- * @param {jQuery} thisRow
- * @returns {boolean}
- */
-const checkBalance = (thisRow) => {
-  const cells = $('td>input', thisRow).toArray()
-  let atomsArray = {}
-  for (let i = 0; i < cells.length; i++) {
-    const species = cells[i].value
-    if (species === '') continue
-    atomsArray = moleculeToAtoms(species, atomsArray, i < 2)
-  }
-  if (
-    $.isEmptyObject(atomsArray) ||
-    (cells[0].value === cells[2].value && cells[1].value === cells[3].value) ||
-    (cells[0].value === cells[3].value && cells[1].value === cells[2].value)
-  ) {
-    thisRow.removeClass('bg-danger-subtle bg-success-subtle')
-    return false
-  } else {
-    let ifBalanced = true
-    for (const i in atomsArray) {
-      if (atomsArray[i] !== 0) {
-        ifBalanced = false
-        break
-      }
-    }
-    if (ifBalanced) {
-      thisRow.removeClass('bg-danger-subtle').addClass('bg-success-subtle')
-    } else {
-      thisRow.addClass('bg-danger-subtle').removeClass('bg-success-subtle')
-    }
-    return ifBalanced
-  }
-}
-
-/**
- * Check if all reactions are valid and enable/disable the proceed button.
- */
-const checkOverallBalance = () => {
-  if (
-    $('#elementaryReactionsTbody>tr.bg-danger-subtle').length === 0 &&
-    $('#elementaryReactionsTbody > tr.bg-success-subtle').length > 0
-  ) {
-    $('#proceedButton').removeClass('disabled').prop('disabled', false)
-  } else {
-    $('#proceedButton').addClass('disabled').prop('disabled', true)
-  }
+  checkBalance(thisRow, 'input')
+  checkAndUpdateProceedButton()
 }
 
 /**
@@ -169,9 +108,9 @@ const cheat = () => {
     for (let i = 0; i < 4; i++) {
       $(selects[i]).val(rxn[i])
     }
-    checkBalance($('#elementaryReactionsTbody > tr').last())
+    checkBalance($('#elementaryReactionsTbody > tr').last(), 'input')
   }
-  checkOverallBalance()
+  checkAndUpdateProceedButton()
 }
 
 $(function () {
