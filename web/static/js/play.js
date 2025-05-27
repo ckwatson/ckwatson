@@ -51,11 +51,16 @@ const addElementaryReaction = () => {
 const serverEventListeners = {}
 /** Submit reactions to server and initialize job tracking */
 const plot = function () {
+  // Only include checked reactions that are balanced
   const reactions = Array.from(
     $('#elementaryReactionsTbody>tr.bg-success-subtle')
-  ).map((row) => {
-    return Array.from($(row).find('td > select')).map((select) => select.value)
-  })
+  )
+    .filter((row) => $(row).find('input[type="checkbox"]').prop('checked'))
+    .map((row) => {
+      return Array.from($(row).find('td > select')).map(
+        (select) => select.value
+      )
+    })
 
   const temperature = parseFloat($('#reactionTemperature').val(), 10)
 
