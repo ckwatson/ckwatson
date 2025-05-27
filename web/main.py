@@ -17,6 +17,7 @@ import numpy as np
 from flask import Flask, jsonify, render_template, request
 from flask_compress import Compress
 from flask_sse import sse
+from jsonschema.exceptions import ValidationError
 
 from web.run_simulation import simulate_experiments_and_plot
 from web.save_a_puzzle import save_a_puzzle
@@ -155,7 +156,7 @@ def handle_save_request():
         )
     try:
         jsonschema.validate(data, schema)
-    except jsonschema.exceptions.ValidationError as e:
+    except ValidationError as e:
         return jsonify(status="danger", message=e.message)
     else:
         return save_a_puzzle(data)
@@ -177,7 +178,11 @@ def serve_page_play(puzzleName):
         mode="play",
         puzzleName=puzzleName,
         puzzleData=puzzleData,
-        ip=request.remote_addr.replace(".", "_"),
+        ip=(
+            request.remote_addr.replace(".", "_")
+            if request.remote_addr
+            else "unknown_ip"
+        ),
     )
 
 
