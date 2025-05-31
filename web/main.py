@@ -200,8 +200,7 @@ def handle_save_request():
 
 @app.route("/create")
 def serve_page_create():
-    ip = request.remote_addr.replace(".", "_") if request.remote_addr else "unknown_ip"
-    return render_template("create.html", ip=ip)
+    return render_template("create.html")
 
 
 @app.route("/play/<puzzle_name>")
