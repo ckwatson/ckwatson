@@ -1,3 +1,4 @@
+import os
 import sys
 
 import redis
@@ -36,3 +37,17 @@ class RedisJobStream:
     def flush(self):
         # This method is required for stream-like objects but is intentionally left empty.
         pass
+
+
+def get_redis_url():
+
+    redis_url = os.environ.get("REDIS_URL")
+    if redis_url:
+        return redis_url
+    host = os.environ.get("REDIS_HOST", "localhost")
+    port = os.environ.get("REDIS_PORT", "6379")
+    password = os.environ.get("REDIS_PASSWORD")
+    if password:
+        return f"redis://:{password}@{host}:{port}/0"
+    else:
+        return f"redis://{host}:{port}/0"

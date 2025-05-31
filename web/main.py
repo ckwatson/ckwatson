@@ -21,7 +21,7 @@ from flask_limiter.util import get_remote_address
 from flask_sse import sse
 from jsonschema.exceptions import ValidationError
 
-from web.redis_utils import RedisJobStream, redis_available
+from web.redis_utils import RedisJobStream, get_redis_url, redis_available
 from web.run_simulation import simulate_experiments_and_plot
 from web.save_a_puzzle import save_a_puzzle
 
@@ -59,7 +59,7 @@ def create_app():
     """Create and configure the Flask application."""
     app = Flask(__name__)
     # redis configuation, for SSE support:
-    app.config["REDIS_URL"] = os.environ.get("REDIS_URL") or "redis://localhost"
+    app.config["REDIS_URL"] = get_redis_url()
     is_redis_available = redis_available(app.config["REDIS_URL"])
     # Limiter setup
     if is_redis_available:

@@ -1,0 +1,28 @@
+previews:
+  generation: automatic
+
+services:
+  - type: web
+    name: ckwatson-web
+    runtime: docker
+
+    envVars:
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: ckwatson-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: ckwatson-redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: keyvalue
+          name: ckwatson-redis
+          property: password
+
+  - type: keyvalue
+    name: ckwatson-redis
+    ipAllowList: []
