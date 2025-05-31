@@ -50,8 +50,10 @@
                         <label class="btn btn-outline-secondary" for="button_to_view_individual">Individual Figures</label>
                         <input type="radio" class="btn-check" name="viewType" value="combined" autocomplete="off" id="button_to_view_combined">
                         <label class="btn btn-outline-secondary" for="button_to_view_combined">Combined Figure</label>
+                        {% if REDIS_OK %}
                         <input type="radio" class="btn-check" name="viewType" value="info" autocomplete="off" id="button_to_view_info">
                         <label class="btn btn-outline-secondary" for="button_to_view_info">Messages</label>
+                        {% endif %}
                     </div>
                 </h3>
             </div>
@@ -61,8 +63,6 @@
                 <ul id="result_nav" class="nav nav-tabs" role="tablist"></ul>
             </div>
         </div>
-    </div>
-    <div class="container">
         <div class="row">
             <div class="col-12">
                 <div id="result_panels" class="tab-content"></div>

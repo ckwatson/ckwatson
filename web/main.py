@@ -1,6 +1,4 @@
 #!/usr/local/bin/python3.5
-# , redirect, url_for, send_from_directory
-# from .crossdomain import crossdomain
 
 import datetime as dt
 import json
@@ -22,6 +20,7 @@ from flask_limiter.util import get_remote_address
 from flask_sse import sse
 from jsonschema.exceptions import ValidationError
 
+from web.redis_utils import RedisJobStream, redis_available
 from web.run_simulation import simulate_experiments_and_plot
 from web.save_a_puzzle import save_a_puzzle
 
@@ -36,30 +35,6 @@ def all_files_in(mypath, end=""):
         for p in Path(mypath).iterdir()
         if p.is_file() and not p.name.startswith(".") and p.name.endswith(end)
     ]
-
-
-# For Server-Sent-Event support:
-
-
-class ListStream:
-    """One ListStream corresponds to one unique computation job.
-    c.f.: http://stackoverflow.com/questions/21341096/redirect-print-to-string-list"""
-
-    def __init__(self, jobID):
-        self.jobID = jobID
-
-    def write(self, *args):
-        s = ""
-        for arg in args:
-            s += " " + str(arg)
-        with app.app_context():
-            try:
-                sse.publish({"data": s}, channel=self.jobID)
-            except AttributeError:
-                sys.__stdout__.write(" * Orphaned Message: " + s)
-
-    def flush(self):
-        pass
 
 
 # Initialize logger:
@@ -77,7 +52,6 @@ rootLogger.addHandler(handler)
 
 
 AUTH_CODE = os.environ.get("CKWATSON_PUZZLE_AUTH_CODE", "123")
-# ongoingJobs = []
 
 app = Flask(__name__)
 # Add rate limiting
@@ -93,6 +67,7 @@ Compress(app)
 # redis configuation, for SSE support:
 # 'os.environ.get("REDIS_URL")' is for Heroku and "redis://localhost" is meant for localhost.
 app.config["REDIS_URL"] = os.environ.get("REDIS_URL") or "redis://localhost"
+REDIS_OK = redis_available(app.config["REDIS_URL"])
 app.register_blueprint(sse, url_prefix="/stream")
 
 # load JSON schema for Puz file for validation:
@@ -103,13 +78,15 @@ schema = json.loads(schema)
 
 @app.route("/plot", methods=["POST", "OPTIONS"])
 def handle_plot_request():
-    start_time = dt.datetime.now()  # start timer
-    data = request.get_json()  # receive JSON data
+    start_time = dt.datetime.now()
+    data = request.get_json()
     # initialize logger for this particular job:
-    # create a log_handler that streams messages to the web UI specifically for this job.
-    logging_handler = logging.StreamHandler(stream=ListStream(data["jobID"]))
     job_logger = logging.getLogger(data["jobID"])
-    job_logger.addHandler(logging_handler)  # redirect the logs since NOW
+    # create a log_handler that streams messages to the web UI specifically for this job.
+    logging_handler = None
+    if REDIS_OK:
+        logging_handler = logging.StreamHandler(stream=RedisJobStream(data["jobID"]))
+        job_logger.addHandler(logging_handler)
     # All functions should have their own logger that is a child of the job_logger.
     logger = job_logger.getChild("handle_plot_request")
     # now the serious part:
@@ -136,7 +113,7 @@ def handle_plot_request():
             temperature=temperature,
             score=score,
         )  # serving result figure files via "return", so as to save server calls
-    except Exception as error:
+    except Exception:
         # print out last words:
         logger.error(traceback.format_exc())
         logger.info(
@@ -192,6 +169,7 @@ def serve_page_play(puzzle_name):
         puzzle_name=puzzle_name,
         puzzle_data=puzzle_data,
         ip=ip,
+        REDIS_OK=REDIS_OK,  # Pass Redis status to template
     )
 
 

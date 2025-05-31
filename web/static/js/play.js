@@ -113,7 +113,13 @@ const plot = function () {
 
   $(`#${jobID}_nav`).tab('show')
   currentViewType = 'info'
-  $('#button_to_view_info').click()
+  const $msgBtn = $('#button_to_view_info')
+  if ($msgBtn.length) {
+    $msgBtn.click()
+  } else {
+    currentViewType = 'combined'
+    $('#button_to_view_combined').click()
+  }
 
   const source = new EventSource(`/stream?channel=${jobID}`)
   serverEventListeners[jobID] = source
@@ -252,6 +258,16 @@ $(() => {
   initializePuzzle(puzzleData)
   $('#addElementaryReaction').click(addElementaryReaction)
   $('#plotButton').click(plot)
+
+  // Remove Messages tab logic if it is not present
+  const $msgBtn = $('#button_to_view_info')
+  if ($msgBtn.length === 0) {
+    // Remove any code that tries to click or select the Messages tab
+    $(document).on('click', '#button_to_view_info', function (e) {
+      e.preventDefault()
+      return false
+    })
+  }
 
   Sortable.create(
     document.getElementById('elementaryReactionsTbody'),
