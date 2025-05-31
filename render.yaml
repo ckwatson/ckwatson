@@ -7,21 +7,11 @@ services:
     runtime: docker
 
     envVars:
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: keyvalue
           name: ckwatson-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: keyvalue
-          name: ckwatson-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: keyvalue
-          name: ckwatson-redis
-          property: password
+          property: connectionString
 
   - type: keyvalue
     name: ckwatson-redis
