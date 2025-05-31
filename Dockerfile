@@ -1,5 +1,5 @@
 FROM ghcr.io/astral-sh/uv:0.7.5-python3.10-bookworm
-MAINTAINER tslmy
+LABEL maintainer="tslmy"
 WORKDIR /app
 COPY . .
 RUN uv sync --compile-bytecode --no-cache --locked
