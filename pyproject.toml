@@ -15,10 +15,10 @@ dependencies = [
     "jsonschema~=3.2.0",
     "colorlog~=4.6.2",
     "jinja2>=2.11.3",
-    "markupsafe>=3.0.2",
     "humanize>=4.12.3",
     "tabulate>=0.9.0",
     "flask-limiter>=3.12",
+    "flask-caching>=2.3.1",
 ]
 
 [tool.isort]

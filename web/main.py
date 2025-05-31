@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3.5
 
 import datetime as dt
+import hashlib
 import json
 import logging
 import os
@@ -13,6 +14,7 @@ import humanize
 import jsonschema
 import numpy as np
 from flask import Flask, jsonify, render_template, request
+from flask_caching import Cache
 from flask_compress import Compress
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -76,12 +78,22 @@ def create_app():
     # which is helpful for us, because we are going to send tons of SVGs per job.
     # https://github.com/colour-science/flask-compress
     Compress(app)
+    # Flask-Caching setup (use Redis if available, else simple cache)
+    if is_redis_available:
+        cache_config = {
+            "CACHE_TYPE": "redis",
+            "CACHE_REDIS_URL": app.config["REDIS_URL"],
+            "CACHE_DEFAULT_TIMEOUT": 3600,
+        }
+    else:
+        cache_config = {"CACHE_TYPE": "simple", "CACHE_DEFAULT_TIMEOUT": 3600}
+    cache = Cache(app, config=cache_config)
     app.register_blueprint(sse, url_prefix="/stream")
-    return app, is_redis_available, limiter
+    return app, is_redis_available, limiter, cache
 
 
 # Create the Flask app and check Redis availability
-app, is_redis_available, limiter = create_app()
+app, is_redis_available, limiter, cache = create_app()
 
 # load JSON schema for Puz file for validation:
 with open("puzzles/schema.js") as f:
@@ -89,45 +101,65 @@ with open("puzzles/schema.js") as f:
 schema = json.loads(schema)
 
 
+def make_plot_cache_key(data):
+    key_data = json.dumps(
+        {
+            "puzzle": data["puzzle"],
+            "reactions": data["reactions"],
+            "temperature": data["temperature"],
+            "conditions": data["conditions"],
+        },
+        sort_keys=True,
+    )
+    return "plot_result:" + hashlib.sha256(key_data.encode()).hexdigest()
+
+
 @app.route("/plot", methods=["POST", "OPTIONS"])
 def handle_plot_request():
     start_time = dt.datetime.now()
     data = request.get_json()
-    # initialize logger for this particular job:
     job_logger = logging.getLogger(data["jobID"])
-    # create a log_handler that streams messages to the web UI specifically for this job.
+    logger = job_logger.getChild("handle_plot_request")
+    cache_key = make_plot_cache_key(data)
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        # Attach the jobID to the cached result for this request
+        logger.info(f"Cache hit for jobID {data['jobID']} with cache key {cache_key}.")
+        return jsonify({**cached_result, "jobID": data["jobID"]})
+
     logging_handler = None
     if is_redis_available:
+        logger.info(
+            f"Redis is available. Will stream logs to frontend via Redis channel {data['jobID']}."
+        )
         logging_handler = logging.StreamHandler(stream=RedisJobStream(data["jobID"]))
         job_logger.addHandler(logging_handler)
-    # All functions should have their own logger that is a child of the job_logger.
-    logger = job_logger.getChild("handle_plot_request")
-    # now the serious part:
-    try:
-        temperature = data["temperature"]  # just a shorthand
 
+    try:
+        temperature = data["temperature"]
         with open(f"puzzles/{data['puzzle']}.puz") as json_file:
             puzzle_definition = json.load(json_file)
             logger.info("    Successfully loaded Puzzle Data from file!")
         plot_combined, plot_individual, score = simulate_experiments_and_plot(
-            data,
-            puzzle_definition,
-            temperature,
-            diag=False,
+            data, puzzle_definition, temperature, diag=False
         )
         logger.info(
             f"Executed for {humanize.precisedelta(dt.datetime.now() - start_time)}."
         )
-        return jsonify(
-            jobID=data["jobID"],
-            status="success",
-            plot_individual=plot_individual,
-            plot_combined=plot_combined,
-            temperature=temperature,
-            score=score,
-        )  # serving result figure files via "return", so as to save server calls
+        result = {
+            "status": "success",
+            "plot_individual": plot_individual,
+            "plot_combined": plot_combined,
+            "temperature": temperature,
+            "score": score,
+        }
+        cache.set(
+            cache_key,
+            result,
+        )
+        result["jobID"] = data["jobID"]
+        return jsonify(result)
     except Exception:
-        # print out last words:
         logger.error(traceback.format_exc())
         logger.info(
             f"Executed for {humanize.precisedelta(dt.datetime.now() - start_time)}."
@@ -176,12 +208,10 @@ def serve_page_create():
 def serve_page_play(puzzle_name):
     with open(f"puzzles/{puzzle_name}.puz") as json_file:
         puzzle_data = json_file.read()
-    ip = request.remote_addr.replace(".", "_") if request.remote_addr else "unknown_ip"
     return render_template(
         "play.html",
         puzzle_name=puzzle_name,
         puzzle_data=puzzle_data,
-        ip=ip,
         REDIS_OK=is_redis_available,  # Pass Redis status to template
     )
 

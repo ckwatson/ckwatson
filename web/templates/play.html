@@ -74,9 +74,9 @@
 {% block scripts %}
 <script type="module" src="/static/js/play.js"></script>
 <script>
-    puzzleName = "{{ puzzle_name }}";
-    puzzleData = {{ puzzle_data | safe }};
-    ip = "{{ ip }}";
-    mode = "play";
+    window.puzzleName = "{{ puzzle_name }}";
+    window.puzzleData = {};
+    window.puzzleData = JSON.parse(`{{ puzzle_data | safe }}`);
+    window.mode = "play";
 </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 import { reverseDict, checkBalance, checkOverallBalance } from './shared.js'
-/* global $, md5, puzzleName, puzzleData, ip, Sortable, Prism, cheet, EventSource */
+/* global $, md5, puzzleName, puzzleData, Sortable, Prism, cheet, EventSource */
 
 let currentViewType = 'info'
 
@@ -74,9 +74,14 @@ const plot = function () {
     })
   ).sort()
 
+  // Compute solutionID and conditionID before using them in jobID
   const solutionID = md5(JSON.stringify(reactions))
   const conditionID = md5(JSON.stringify(conditions))
-  const jobID = `${ip}_${conditionID}_${temperature}_${solutionID}_${Date.now()}`
+  // Use a cryptographically secure random UUID for jobID
+  const jobID =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${conditionID}_${temperature}_${solutionID}_${Date.now()}`
 
   if ($(`#${jobID}`).length > 0) {
     $(`#${jobID}_nav`).tab('show')
