@@ -56,20 +56,26 @@ AUTH_CODE = os.environ.get("CKWATSON_PUZZLE_AUTH_CODE", "123")
 def create_app():
     """Create and configure the Flask application."""
     app = Flask(__name__)
-    # Add rate limiting
-    limiter = Limiter(
-        get_remote_address, app=app, default_limits=["200 per day", "50 per hour"]
-    )
+    # redis configuation, for SSE support:
+    app.config["REDIS_URL"] = os.environ.get("REDIS_URL") or "redis://localhost"
+    is_redis_available = redis_available(app.config["REDIS_URL"])
+    # Limiter setup
+    if is_redis_available:
+        limiter = Limiter(
+            get_remote_address,
+            app=app,
+            default_limits=["200 per day", "50 per hour"],
+            storage_uri=app.config["REDIS_URL"],
+        )
+    else:
+        limiter = Limiter(
+            get_remote_address, app=app, default_limits=["200 per day", "50 per hour"]
+        )
     # Flask-compress is a Flask extension that provides gzip compression for the web app.
     # It is used to reduce the size of the response data sent from the server to the client,
     # which is helpful for us, because we are going to send tons of SVGs per job.
     # https://github.com/colour-science/flask-compress
     Compress(app)
-
-    # redis configuation, for SSE support:
-    # 'os.environ.get("REDIS_URL")' is for Heroku and "redis://localhost" is meant for localhost.
-    app.config["REDIS_URL"] = os.environ.get("REDIS_URL") or "redis://localhost"
-    is_redis_available = redis_available(app.config["REDIS_URL"])
     app.register_blueprint(sse, url_prefix="/stream")
     return app, is_redis_available, limiter
 
