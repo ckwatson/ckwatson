@@ -17,6 +17,10 @@ Within a given set of all substances possibly present, the player's goal is to f
 [ck]: https://chem.libretexts.org/Bookshelves/General_Chemistry/Map%3A_Chemistry_-_The_Central_Science_(Brown_et_al.)/14%3A_Chemical_Kinetics
 [er]: https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Kinetics/03%3A_Rate_Laws/3.02%3A_Reaction_Mechanisms/3.2.01%3A_Elementary_Reactions
 
+([live demo](https://ckwatson.onrender.com/))
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
 ## Installation
 
 ```shell
@@ -73,10 +77,6 @@ minikube service web
 - If you see `ImagePullBackOff`, ensure you ran `eval $(minikube docker-env)` before building.
 - For production, set up resource limits and health checks (already included in the YAMLs).
 - For Redis security in production, set a password and update the deployment and app config accordingly.
-
-### On Heroku
-
-Please use [this Buildpack](https://github.com/dmathieu/heroku-buildpack-submodules#installation) for Auto-Deployment Support on submodules.
 
 ## Folder Structure
 

@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:0.7.5-python3.10-bookworm
+FROM ghcr.io/astral-sh/uv:0.7.9-python3.10-bookworm-slim
 LABEL maintainer="tslmy"
 WORKDIR /app
 COPY . .
