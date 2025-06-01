@@ -219,3 +219,7 @@ def serve_page_play(puzzle_name):
 def serve_page_index():
     puzzle_list = all_files_in("puzzles", end=".puz")
     return render_template("index.html", puzzle_list=puzzle_list)
+
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=80, debug=True, threaded=True)
