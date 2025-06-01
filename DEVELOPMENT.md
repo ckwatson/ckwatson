@@ -6,10 +6,7 @@ This repository uses [pre-commit hooks](https://pre-commit.com/). Run `pre-commi
 
 ## Testing
 
-This project uses [`pytest`][pt] for testing Python code. Run:
+This project uses [`pytest`][pt] for testing Python code. Run `just test` to run all tests and update coverage badge image.
 
-```shell
-PYTHONPATH=. uv run pytest --cov=web/ --cov=kernel/engine/ ; uv run coverage-badge -f -o coverage.svg
-```
 
 [pt]: https://docs.pytest.org/en/stable/
