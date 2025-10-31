@@ -85,7 +85,7 @@ def save_a_puzzle(data):
         print("Failed ensuring puzzles dir:", e)
         return _error("Server misconfiguration: cannot create puzzles directory.")
 
-    target_path = (puzzles_dir / f"{puzzle_name}.puz").resolve()
+    target_path = (puzzles_dir / f"{puzzle_name}.json").resolve()
     # Path traversal defense: target must be inside puzzles_dir
     if not str(target_path).startswith(str(puzzles_dir) + os.sep):
         return _error("Invalid puzzle path.")

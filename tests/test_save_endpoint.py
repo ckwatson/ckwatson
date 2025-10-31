@@ -46,7 +46,7 @@ def test_successful_save(client):
     r = post(client, minimal_payload())
     data = r.get_json()
     assert data["status"] == "success"
-    assert (Path("puzzles") / "TestPuzzle.puz").exists()
+    assert (Path("puzzles") / "TestPuzzle.json").exists()
 
 
 def test_duplicate_save_rejected(client):

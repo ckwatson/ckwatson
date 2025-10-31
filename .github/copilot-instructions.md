@@ -50,7 +50,7 @@ redis-server
 
 #### File Organization
 
-- Puzzle files: `puzzles/*.puz` (JSON format, validated against `schema.json`)
+- Puzzle files: `puzzles/*.json` (JSON format, validated against `schema.json`)
 - Templates: Standard Flask structure in `web/templates/` with Bootstrap 5
 - Static assets: `web/static/` with CSS/JS following standard naming
 

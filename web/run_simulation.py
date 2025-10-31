@@ -68,7 +68,7 @@ def simulate_experiments_and_plot(
         puzzle_definition["energy_dict"],
         reagent_dictionary=[
             # Note: We use a list here because we want to keep the order of the reagents as they are defined in the puzzle file.
-            # TODO: Why would it matter? The `.puz` files, when loaded into the Python realm as `dict`s, will not be ordered.
+            # TODO: Why would it matter? The `.json` files, when loaded into the Python realm as `dict`s, will not be ordered.
             (
                 reagent,
                 make_reaction_mechanism_for_reagent(

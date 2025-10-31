@@ -137,7 +137,7 @@ def handle_plot_request():
 
     try:
         temperature = data["temperature"]
-        with open(f"puzzles/{data['puzzle']}.puz") as json_file:
+        with open(f"puzzles/{data['puzzle']}.json") as json_file:
             puzzle_definition = json.load(json_file)
             logger.info("    Successfully loaded Puzzle Data from file!")
         plot_combined, plot_individual, score = simulate_experiments_and_plot(
@@ -205,7 +205,10 @@ def serve_page_create():
 
 @app.route("/play/<puzzle_name>")
 def serve_page_play(puzzle_name):
-    with open(f"puzzles/{puzzle_name}.puz") as json_file:
+    # Disallow reading `schema.json` or any hidden files
+    if puzzle_name.startswith(".") or puzzle_name == "schema":
+        return "Invalid puzzle name.", 400
+    with open(f"puzzles/{puzzle_name}.json") as json_file:
         puzzle_data = json_file.read()
     return render_template(
         "play.html",
@@ -217,7 +220,9 @@ def serve_page_play(puzzle_name):
 
 @app.route("/")
 def serve_page_index():
-    puzzle_list = all_files_in("puzzles", end=".puz")
+    puzzle_list = all_files_in("puzzles", end=".json")
+    # Except `schema.json`.
+    puzzle_list = [p for p in puzzle_list if p != "schema"]
     return render_template("index.html", puzzle_list=puzzle_list)
 
 
