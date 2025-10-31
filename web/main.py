@@ -96,7 +96,7 @@ def create_app():
 app, is_redis_available, limiter, cache = create_app()
 
 # load JSON schema for Puz file for validation:
-with open("puzzles/schema.js") as f:
+with open("puzzles/schema.json") as f:
     schema = f.read()
 schema = json.loads(schema)
 

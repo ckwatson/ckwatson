@@ -25,7 +25,7 @@ When adding or modifying the "create a puzzle" feature, keep these invariants an
 6. Atomic write: Write to a temporary file in `puzzles/` then `os.replace` it into place to avoid partial files on crash.
 7. Backwards compatibility: The saved JSON includes `reagents` (list of reagent keys) plus `reagentPERs` mapping. Keep both until older clients are deprecated.
 8. Rate limiting & auth: The `/save` endpoint is limited to `5 per minute` and gated by the `CKWATSON_PUZZLE_AUTH_CODE` env var. Tests disable the limiter (`limiter.enabled = False`).
-9. Schema validation: JSON Schema (`puzzles/schema.js`) is enforced before the deeper semantic validations run in `save_a_puzzle` (defense-in-depth layering).
+9. Schema validation: JSON Schema (`puzzles/schema.json`) is enforced before the deeper semantic validations run in `save_a_puzzle` (defense-in-depth layering).
 10. Error responses: Always return a JSON object `{status: 'danger'|'success', message: <human-readable>}` for frontend toast handling.
 
 See `web/save_a_puzzle.py` and `tests/test_save_endpoint.py` for the authoritative logic and test coverage.
